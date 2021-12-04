@@ -93,6 +93,7 @@ app.bot.start()  # 启动bot
 | cache | bool | false  | 是否使用缓存(可选) |
 
 - 返回参数
+
 | 参数   | 类型 | 说明         |
 | ------ | ------ | ------------ |
 | avatar | string | 头像url |
