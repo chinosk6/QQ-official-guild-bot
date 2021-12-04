@@ -7,19 +7,20 @@
 
 
 
-# 作为SDK使用
+# 直接使用SDK
 
 - 参考`main_bot.py`
+- 没有文档, 代码补全很完善了
 
 ```python
 import bot_api
 
-bot = bot_api.BotApp(你的appid, 你的token, 你的app_secret,
+bot = bot_api.BotApp(123456, "你的bot token", "你的bot secret",
                      is_sandbox=True, debug=True, api_return_pydantic=True,
-                     inters=[bot_api.Intents.GUILDS, bot_api.Intents.AT_MESSAGES, bot_api.Intents.GUILD_MEMBERS])
+                     inters=[bot_api.Intents.GUILDS, bot_api.Intents.AT_MESSAGES, bot_api.Intents.GUILD_MEMBERS])  # 事件订阅
 
 
-@bot.receiver(bot_api.structs.Codes.SeverCode.BotGroupAtMessage)
+@bot.receiver(bot_api.structs.Codes.SeverCode.BotGroupAtMessage)  # 填入对应的参数实现处理对应事件
 def get_at_message(chain: bot_api.structs.Message):  # 注册一个艾特消息处理器
     bot.logger(f"收到来自频道:{chain.guild_id} 子频道: {chain.channel_id} "
                f"内用户: {chain.author.username}({chain.author.id}) 的消息: {chain.content} ({chain.id})")
@@ -50,19 +51,30 @@ bot.start()  # 启动bot
 import bot_api
 import server
 
-bot = bot_api.BotApp(你的appid, 你的token, 你的app_secret,
+bot = bot_api.BotApp(123456, "你的bot token", "你的bot secret",
                      is_sandbox=True, debug=True, api_return_pydantic=True,
-                     inters=[bot_api.Intents.GUILDS, bot_api.Intents.AT_MESSAGES, bot_api.Intents.GUILD_MEMBERS])
+                     inters=[bot_api.Intents.GUILDS, bot_api.Intents.AT_MESSAGES, bot_api.Intents.GUILD_MEMBERS])  # 事件订阅
 
 
 app = server.BotServer(bot, ip_call="127.0.0.1", port_call=11415, ip_listen="127.0.0.1", port_listen=1988,
-                       allow_push=False)  # 此处填写你的地址
-app.reg_bot_at_message()
+                       allow_push=False)
 
+# 开始注册事件, 可以选择需要的进行注册
+app.reg_bot_at_message()  # 艾特消息事件
+app.reg_guild_member_add()  # 成员增加事件
+app.reg_guild_member_remove()  # 成员减少事件
 
-app.listening_server_start()  # 启动HTTP API服务器
-app.bot.start()  # 启动bot
+# 以下事件与onebot差别较大
+app.reg_guild_create()  # Bot加入频道事件
+app.reg_guild_update()  # 频道信息更新事件
+app.reg_guild_delete()  # Bot离开频道/频道被解散事件
+app.reg_channel_create()  # 子频道创建事件
+app.reg_channel_update()  # 子频道信息更新事件
+app.reg_channel_delete()  # 子频道删除事件
+# 注册事件结束
 
+app.listening_server_start()  # HTTP API 服务器启动
+app.bot.start()  # Bot启动
 ```
 
 ------
@@ -173,4 +185,128 @@ app.bot.start()  # 启动bot
 - 返回参数
 
 见: https://bot.q.qq.com/wiki/develop/api/openapi/message/get_message_of_id.html
+
+
+
+------
+
+#### 目前实现的Event(基本同`onebot`)
+
+- 特别注意: 所有`用户ID`, `频道号`, `子频道号`, `消息ID`字段均为`string`
+
+##### 收到艾特消息
+
+- 见: https://github.com/botuniverse/onebot-11/blob/master/event/message.md#%E7%BE%A4%E6%B6%88%E6%81%AF
+
+- 注意:
+
+  - 注意上面的`特别注意`
+  - `anonymous`字段恒为`null`
+  - `sender`字段中仅`user_id`, `nickname`, `role`有效
+
+
+
+
+##### 成员增加事件
+
+- 见: https://github.com/botuniverse/onebot-11/blob/master/event/notice.md#%E7%BE%A4%E6%88%90%E5%91%98%E5%A2%9E%E5%8A%A0
+- 注意: 
+  - 注意上面的`特别注意`
+  
+  - `sub_type`恒为`approve`
+  
+    
+
+
+##### 成员减少事件
+
+- 见: https://github.com/botuniverse/onebot-11/blob/master/event/notice.md#%E7%BE%A4%E6%88%90%E5%91%98%E5%87%8F%E5%B0%91
+- 注意: 
+  - 注意上面的`特别注意`
+  - `sub_type`恒为`leave`
+
+------
+
+
+
+#### 目前实现的Event(与`onebot`差别较大)
+
+- 通用字段
+
+| 参数        | 类型   | 默认值   | 说明                           |
+| ----------- | ------ | -------- | ------------------------------ |
+| time        | int    | -        | 消息接收时间戳                 |
+| self_id     | string | -        | 自身id                         |
+| post_type   | string | `notice` | 上报类型                       |
+| notice_type | string | -        | 通知类型                       |
+| sub_type    | string | -        | 通知子类型                     |
+| user_id     | string | 空字符串 | 触发者ID, 仅在对应事件有值     |
+| guiid_id    | string | 空字符串 | 触发频道ID, 仅在对应事件有值   |
+| channel_id  | string | 空字符串 | 触发子频道ID, 仅在对应事件有值 |
+| data        | -      | -        | 每个事件均不同, 见下方文档     |
+
+
+
+##### Bot加入频道事件
+
+| 参数        | 类型                                                         | 值                                                           |
+| ----------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| post_type   | string                                                       | `notice`                                                     |
+| notice_type | string                                                       | `guild_create`                                               |
+| sub_type    | string                                                       | `guild_create`                                               |
+| guiid_id    | string                                                       | 频道ID                                                       |
+| data        | [Guild](https://bot.q.qq.com/wiki/develop/api/openapi/guild/model.html#guild) | 见: [腾讯机器人文档](https://bot.q.qq.com/wiki/develop/api/gateway/guild.html#guild-create) |
+
+
+##### 频道信息更新事件
+
+| 参数      | 类型                                                         | 值                                                           |
+| --------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| post_type | string                                                       | `notice`                                                     |
+| sub_type  | string                                                       | `guild_update`                                               |
+| guiid_id  | string                                                       | 频道ID                                                       |
+| data      | [Guild](https://bot.q.qq.com/wiki/develop/api/openapi/guild/model.html#guild) | 见: [腾讯机器人文档](https://bot.q.qq.com/wiki/develop/api/gateway/guild.html#guild-update) |
+
+##### 机器人离开频道/频道被解散事件
+
+| 参数        | 类型                                                         | 值                                                           |
+| ----------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| post_type   | string                                                       | `notice`                                                     |
+| notice_type | string                                                       | `guild_update`                                               |
+| sub_type    | string                                                       | `guild_update`                                               |
+| guiid_id    | string                                                       | 频道ID                                                       |
+| data        | [Guild](https://bot.q.qq.com/wiki/develop/api/openapi/guild/model.html#guild) | 见: [腾讯机器人文档](https://bot.q.qq.com/wiki/develop/api/gateway/guild.html#guild-delete) |
+
+##### 子频道创建事件
+
+| 参数        | 类型                                                         | 值                                                           |
+| ----------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| post_type   | string                                                       | `notice`                                                     |
+| notice_type | string                                                       | `channel_create`                                             |
+| sub_type    | string                                                       | `channel_create`                                             |
+| guiid_id    | string                                                       | 频道ID                                                       |
+| channel_id  | string                                                       | 子频道ID                                                     |
+| data        | [Channel](https://bot.q.qq.com/wiki/develop/api/openapi/channel/model.html#channel) | 见: [腾讯机器人文档](https://bot.q.qq.com/wiki/develop/api/gateway/channel.html#channel-create) |
+
+##### 子频道信息更新事件
+
+| 参数        | 类型                                                         | 值                                                           |
+| ----------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| post_type   | string                                                       | `notice`                                                     |
+| notice_type | string                                                       | `channel_update`                                             |
+| sub_type    | string                                                       | `channel_update`                                             |
+| guiid_id    | string                                                       | 频道ID                                                       |
+| channel_id  | string                                                       | 子频道ID                                                     |
+| data        | [Channel](https://bot.q.qq.com/wiki/develop/api/openapi/channel/model.html#channel) | 见: [腾讯机器人文档](https://bot.q.qq.com/wiki/develop/api/gateway/channel.html#channel-update) |
+
+##### 子频道被删除事件
+
+| 参数        | 类型                                                         | 值                                                           |
+| ----------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| post_type   | string                                                       | `notice`                                                     |
+| notice_type | string                                                       | `channel_delete`                                             |
+| sub_type    | string                                                       | `channel_delete`                                             |
+| guiid_id    | string                                                       | 频道ID                                                       |
+| channel_id  | string                                                       | 子频道ID                                                     |
+| data        | [Channel](https://bot.q.qq.com/wiki/develop/api/openapi/channel/model.html#channel) | 见: [腾讯机器人文档](https://bot.q.qq.com/wiki/develop/api/gateway/channel.html#channel-delete) |
 

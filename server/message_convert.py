@@ -1,7 +1,9 @@
+import time
 from bot_api import structs as msgs
 import dateutil.parser
 from . import tooles
 import re
+from pydantic import BaseModel
 
 
 def time2timestamp(time_iso8601: str):
@@ -124,3 +126,41 @@ def guild_member_info_convert(info: msgs.Member, group_id):
     except:
         retdata = str(info)
         return retdata
+
+def guild_member_change_convert(info: msgs.MemberWithGuildID, selfid, is_useradd=True):
+    try:
+        retdata = {
+            "time": int(time.time()),
+            "self_id": selfid,
+            "post_type": "notice",
+            "notice_type": "group_increase" if is_useradd else "group_decrease",
+            "sub_type": "approve" if is_useradd else "leave",
+            "group_id": info.guild_id,
+            "user_id": info.user.id if info.user is not None else "",
+            "operator_id": info.user.id if info.user is not None else "",
+        }
+
+        return retdata
+    except Exception as sb:
+        retdata = {
+            "code": -114514,
+            "msg": repr(sb)
+        }
+        return retdata
+
+def others_event(selfid, post_type, notice_type, sub_type, data: BaseModel, user_id="", guiid_id="", channel_id=""):
+
+    retdata = {
+        "time": int(time.time()),
+        "self_id": selfid,
+        "post_type": post_type,
+        "notice_type": notice_type,
+        "sub_type": sub_type,
+
+        "user_id": user_id,
+        "guiid_id": guiid_id,
+        "channel_id": channel_id,
+        "data": data.dict()
+    }
+
+    return retdata
