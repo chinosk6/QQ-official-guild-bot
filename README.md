@@ -79,7 +79,20 @@ app.bot.start()  # Bot启动
 
 ------
 
-   #### 目前实现的API(基本同`onebot`):
+### 目前实现的CQ码
+
+| CQ码                 | 功能     | 备注                                               |
+| -------------------- | -------- | -------------------------------------------------- |
+| [CQ:reply,id=abc123] | 回复消息 | 被动回复请务必带上此CQ码, 否则会被视为主动推送消息 |
+| [CQ:at,qq=123456]    | 艾特用户 | 与官方<@!123456>对应                               |
+
+
+
+------
+
+
+
+   ### 目前实现的API(基本同`onebot`):
 
 - 特别注意: 所有`用户ID`, `频道号`, `子频道号`, `消息ID`字段均为`string`
 
@@ -94,9 +107,10 @@ app.bot.start()  # Bot启动
 ------
 
 
-#### 目前实现的API(与`onebot`不同)
 
-##### 获取自身信息
+### 目前实现的API(与`onebot`不同)
+
+#### 获取自身信息
 
 - 接口: `/get_self_info`
 
@@ -114,7 +128,7 @@ app.bot.start()  # Bot启动
 
 
 
-##### 获取自身加入频道列表
+#### 获取自身加入频道列表
 
 - 接口: `/get_self_guild_list`
 
@@ -131,7 +145,7 @@ app.bot.start()  # Bot启动
 
 
 
-##### 获取频道信息
+#### 获取频道信息
 
 - 接口: `/get_guild_info`
 
@@ -145,7 +159,7 @@ app.bot.start()  # Bot启动
 
 
 
-##### 获取子频道信息
+#### 获取子频道信息
 
 - 接口: `/get_channel_info`
 
@@ -159,7 +173,7 @@ app.bot.start()  # Bot启动
 
 
 
-##### 获取子频道列表
+#### 获取子频道列表
 
 - 接口: `/get_channel_list`
 
@@ -173,7 +187,7 @@ app.bot.start()  # Bot启动
 
 
 
-##### 获取指定消息
+#### 获取指定消息
 
 - 接口: `/get_message`
 
@@ -190,11 +204,11 @@ app.bot.start()  # Bot启动
 
 ------
 
-#### 目前实现的Event(基本同`onebot`)
+### 目前实现的Event(基本同`onebot`)
 
 - 特别注意: 所有`用户ID`, `频道号`, `子频道号`, `消息ID`字段均为`string`
 
-##### 收到艾特消息
+#### 收到艾特消息
 
 - 见: https://github.com/botuniverse/onebot-11/blob/master/event/message.md#%E7%BE%A4%E6%B6%88%E6%81%AF
 
@@ -207,7 +221,7 @@ app.bot.start()  # Bot启动
 
 
 
-##### 成员增加事件
+#### 成员增加事件
 
 - 见: https://github.com/botuniverse/onebot-11/blob/master/event/notice.md#%E7%BE%A4%E6%88%90%E5%91%98%E5%A2%9E%E5%8A%A0
 - 注意: 
@@ -218,7 +232,7 @@ app.bot.start()  # Bot启动
     
 
 
-##### 成员减少事件
+#### 成员减少事件
 
 - 见: https://github.com/botuniverse/onebot-11/blob/master/event/notice.md#%E7%BE%A4%E6%88%90%E5%91%98%E5%87%8F%E5%B0%91
 - 注意: 
@@ -229,7 +243,7 @@ app.bot.start()  # Bot启动
 
 
 
-#### 目前实现的Event(与`onebot`差别较大)
+### 目前实现的Event(与`onebot`差别较大)
 
 - 通用字段
 
@@ -247,7 +261,7 @@ app.bot.start()  # Bot启动
 
 
 
-##### Bot加入频道事件
+#### Bot加入频道事件
 
 | 参数        | 类型                                                         | 值                                                           |
 | ----------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
@@ -258,7 +272,7 @@ app.bot.start()  # Bot启动
 | data        | [Guild](https://bot.q.qq.com/wiki/develop/api/openapi/guild/model.html#guild) | 见: [腾讯机器人文档](https://bot.q.qq.com/wiki/develop/api/gateway/guild.html#guild-create) |
 
 
-##### 频道信息更新事件
+#### 频道信息更新事件
 
 | 参数      | 类型                                                         | 值                                                           |
 | --------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
@@ -267,7 +281,7 @@ app.bot.start()  # Bot启动
 | guiid_id  | string                                                       | 频道ID                                                       |
 | data      | [Guild](https://bot.q.qq.com/wiki/develop/api/openapi/guild/model.html#guild) | 见: [腾讯机器人文档](https://bot.q.qq.com/wiki/develop/api/gateway/guild.html#guild-update) |
 
-##### 机器人离开频道/频道被解散事件
+#### 机器人离开频道/频道被解散事件
 
 | 参数        | 类型                                                         | 值                                                           |
 | ----------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
@@ -277,7 +291,7 @@ app.bot.start()  # Bot启动
 | guiid_id    | string                                                       | 频道ID                                                       |
 | data        | [Guild](https://bot.q.qq.com/wiki/develop/api/openapi/guild/model.html#guild) | 见: [腾讯机器人文档](https://bot.q.qq.com/wiki/develop/api/gateway/guild.html#guild-delete) |
 
-##### 子频道创建事件
+#### 子频道创建事件
 
 | 参数        | 类型                                                         | 值                                                           |
 | ----------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
@@ -288,7 +302,7 @@ app.bot.start()  # Bot启动
 | channel_id  | string                                                       | 子频道ID                                                     |
 | data        | [Channel](https://bot.q.qq.com/wiki/develop/api/openapi/channel/model.html#channel) | 见: [腾讯机器人文档](https://bot.q.qq.com/wiki/develop/api/gateway/channel.html#channel-create) |
 
-##### 子频道信息更新事件
+#### 子频道信息更新事件
 
 | 参数        | 类型                                                         | 值                                                           |
 | ----------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
@@ -299,7 +313,7 @@ app.bot.start()  # Bot启动
 | channel_id  | string                                                       | 子频道ID                                                     |
 | data        | [Channel](https://bot.q.qq.com/wiki/develop/api/openapi/channel/model.html#channel) | 见: [腾讯机器人文档](https://bot.q.qq.com/wiki/develop/api/gateway/channel.html#channel-update) |
 
-##### 子频道被删除事件
+#### 子频道被删除事件
 
 | 参数        | 类型                                                         | 值                                                           |
 | ----------- | ------------------------------------------------------------ | ------------------------------------------------------------ |

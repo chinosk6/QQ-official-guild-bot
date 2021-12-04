@@ -20,7 +20,7 @@ class BotServer(sender.MessageSender):
         :param port_call: Event回报端口
         :param ip_listen: POST上报ip
         :param port_listen: POST上报端口
-        :param allow_push: 是否允许发送主动推送消息(即消息内不含[CQ:reply,id=...]字段)
+        :param allow_push: 是否允许发送主动推送消息(即消息内不含CQ码: [CQ:reply,id=...])
         """
         super().__init__(bot_app, ip_call, port_call)
 
