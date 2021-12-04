@@ -1,5 +1,4 @@
 from bot_api import structs as msgs
-import json
 import dateutil.parser
 from . import tooles
 import re
