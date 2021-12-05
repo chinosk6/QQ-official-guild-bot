@@ -3,7 +3,7 @@ from flask import Flask, jsonify
 from flask import request
 from waitress import serve as wserve
 from . import sender
-from . import tooles
+from . import tools
 from . import message_convert
 import bot_api
 
@@ -33,24 +33,22 @@ class BotServer(sender.MessageSender):
         channel_id = request.args.get("group_id")
         message = request.args.get("message")
 
-        cmsg, reply_msg_id = message_convert.cq_to_guild_text(message)
+        cmsg, reply_msg_id, img_url = message_convert.cq_to_guild_text(message, self.bot.img_to_url)
         if not self.allow_push and reply_msg_id == "":
             self.bot.logger("不发送允许PUSH消息, 请添加回复id, 或者将\"allow_push\"设置为True", warning=True)
         else:
-            sendmsg = self.bot.api_send_reply_message(channel_id, reply_msg_id, cmsg)
-            try:
+            sendmsg = self.bot.api_send_reply_message(channel_id, reply_msg_id, cmsg, img_url, retstr=True)
+            sdata = json.loads(sendmsg)
+            if "id" in sdata:
                 ret = {
                     "data": {
-                        "message_id": sendmsg.id
+                        "message_id": sdata["id"]
                     },
                     "retcode": 0,
                     "status": "ok"
                 }
-            except AttributeError:
-                ret = {
-                    "retcode": -114514,
-                    "status": "发送消息失败"
-                }
+            else:
+                ret = sdata
 
             return jsonify(ret)
 
@@ -106,7 +104,7 @@ class BotServer(sender.MessageSender):
     def mark_msg_as_read():
         return "ok"
 
-    @tooles.on_new_thread
+    @tools.on_new_thread
     def listening_server_start(self):
         flask.route("/send_group_msg", methods=["GET", "POST"])(self.send_group_msg)
         flask.route("/get_self_info", methods=["GET", "POST"])(self.get_self_info)

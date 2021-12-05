@@ -28,6 +28,8 @@ class BotMessageDistributor(api.BotApi):
         self.event_audio_on_mic: List[Callable] = []  # 机器人上麦
         self.event_audio_off_mic: List[Callable] = []  # 机器人下麦
 
+        self.img_to_url = None  # 图片转为url
+
         self.modules = {}  # 模块注册
 
     def receiver(self, reg_type: str, reg_name=""):
@@ -79,6 +81,12 @@ class BotMessageDistributor(api.BotApi):
 
             elif reg_type == BCd.SeverCode.AUDIO_OFF_MIC:
                 _appender(self.event_audio_off_mic, "机器人下麦")
+
+            elif reg_type == BCd.SeverCode.image_to_url:
+                if self.img_to_url is not None:
+                    self.logger(f"图片转url只允许注册一次。 生效函数由 {self.img_to_url.__name__} 更改为 {func.__name__}",
+                                warning=True)
+                self.img_to_url = func
 
             elif reg_type == BCd.SeverCode.Module:  # 注册自定义模块
                 if reg_name != "":

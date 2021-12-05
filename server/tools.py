@@ -1,4 +1,6 @@
 from threading import Thread
+import random
+import string
 
 
 def gettext_between(text: str, before: str, after: str, is_include=False) -> str:
@@ -31,3 +33,7 @@ def on_new_thread(f):
         t.start()
 
     return (task_qwq)
+
+def generate_randstring(num=8):
+    value = ''.join(random.sample(string.ascii_letters + string.digits, num))
+    return(value)

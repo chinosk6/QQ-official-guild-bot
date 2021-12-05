@@ -36,6 +36,7 @@ class BotApp(inter.BotMessageDistributor):
         self.inters = inters
         self.session_id = None
         self._d = None  # 心跳参数
+        self._t = None
         self.heartbeat_time = -1  # 心跳间隔
         self.ws = None
 
@@ -209,8 +210,13 @@ class BotApp(inter.BotMessageDistributor):
                 self.logger("发送心跳包失败", error=True)
                 self._on_close()
 
-        _t = Thread(target=_send_heart_beat)
-        _t.start()
+        if self._t is None:
+            self._t = Thread(target=_send_heart_beat)
+            self._t.start()
+        else:
+            if not self._t.is_alive():
+                self._t = Thread(target=_send_heart_beat)
+                self._t.start()
 
 
     def _get_websocket_url(self):

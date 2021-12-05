@@ -2,6 +2,7 @@ import requests
 import json
 from . import structs
 import typing as t
+import time
 
 
 class ColorfulPrint:
@@ -265,11 +266,12 @@ class BotApi:
     # TODO 更多API
 
     def logger(self, msg, debug=False, warning=False, error=False):
+        _tm = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
         if error:
-            ColorfulPrint.printout(f"[ERROR] {msg}", ColorfulPrint.Color.RED)
+            ColorfulPrint.printout(f"[{_tm}][ERROR] {msg}", ColorfulPrint.Color.RED)
         elif warning:
-            ColorfulPrint.printout(f"[WARNING] {msg}", ColorfulPrint.Color.LIGHTYELLOW_EX)
+            ColorfulPrint.printout(f"[{_tm}][WARNING] {msg}", ColorfulPrint.Color.LIGHTYELLOW_EX)
         elif debug and self.debug:
-            ColorfulPrint.printout(f"[DEBUG] {msg}", ColorfulPrint.Color.BLUE)
+            ColorfulPrint.printout(f"[{_tm}][DEBUG] {msg}", ColorfulPrint.Color.BLUE)
         elif not debug:
-            ColorfulPrint.printout(f"[INFO] {msg}")
+            ColorfulPrint.printout(f"[{_tm}][INFO] {msg}")

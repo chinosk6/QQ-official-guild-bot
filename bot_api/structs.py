@@ -41,6 +41,7 @@ class Codes:
     class SeverCode(QBot.GatewayEventName):
         BotGroupAtMessage = "BotGroupAtMessage"
         Module = "Module"
+        image_to_url = "image_to_url"
 
 
 class User(BaseModel):  # 用户对象
@@ -62,6 +63,13 @@ class Member(BaseModel):
 
 class MessageAttachment(BaseModel):
     url: str
+    content_type: t.Optional[str]
+    filename: t.Optional[str]
+    height: t.Optional[int]
+    width: t.Optional[int]
+    id: t.Optional[str]
+    size: t.Optional[int]
+
 
 class MessageEmbedField(BaseModel):
     name: str

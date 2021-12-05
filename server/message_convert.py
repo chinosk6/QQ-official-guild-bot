@@ -1,9 +1,11 @@
 import time
 from bot_api import structs as msgs
 import dateutil.parser
-from . import tooles
+from . import tools
 import re
 from pydantic import BaseModel
+import os
+import requests
 
 
 def time2timestamp(time_iso8601: str):
@@ -11,20 +13,54 @@ def time2timestamp(time_iso8601: str):
     return int(d)
 
 
-def cq_to_guild_text(msg: str):
+def cq_to_guild_text(msg: str, func_img_to_url):
     rmsg = msg[:]
-    reply = re.findall("\\[CQ:reply,id=\\w*\\]", msg)
+    reply = re.findall("\\[CQ:reply,id=\\w*]", msg)
     if reply:  # 替换回复
-        reply_id = tooles.gettext_between(rmsg, "[CQ:reply,id=", "]")
+        reply_id = tools.gettext_between(rmsg, "[CQ:reply,id=", "]")
         rmsg = rmsg.replace(reply[0], "")
     else:
         reply_id = ""
 
-    at = re.findall("\\[CQ:at,qq=\\w*\\]", msg)
+    at = re.findall("\\[CQ:at,qq=\\w*]", msg)
     for _a in at:  # 替换艾特
-        rmsg = rmsg.replace(_a, f"<@!{tooles.gettext_between(_a, '[CQ:at,qq=', ']')}>")
+        rmsg = rmsg.replace(_a, f"<@!{tools.gettext_between(_a, '[CQ:at,qq=', ']')}>")
 
-    return (rmsg, reply_id)
+
+    ret_img_url = ""
+    spath = os.path.split(__file__)[0]
+    img = re.findall("\\[CQ:image,[^]]*]", rmsg)
+    img_url = ""
+    img_path = ""
+    for im in img:
+        ps = tools.gettext_between(im, "[CQ:image,", "]")
+        _file = re.findall("file=[^,]*", ps)  # 查找file参数
+        if _file:
+            img_path = _file[0][len("file="):-1 if _file[0].endswith(',') else None]
+            if img_path.startswith("http"):
+                img_url = img_path
+
+        _url = re.findall("url=[^,]*", ps)  # 查找url参数
+        if _url:
+            img_url = _url[0][len("url="):-1 if _url[0].endswith(',') else None]
+        break  # 仅支持一张图
+
+    for im in img:
+        rmsg = rmsg.replace(im, "", 1)  # 清除图片cq码
+
+    if callable(func_img_to_url):
+        if img_url != "":  # 参数为url
+            save_name = tools.generate_randstring() + ".jpg"
+            if not os.path.isdir(f"{spath}/temp"):
+                os.mkdir(f"{spath}/temp")
+            with open(f"{spath}/temp/{save_name}", "wb") as f:
+                f.write(requests.get(img_url).content)
+            ret_img_url = func_img_to_url(f"{spath}/temp/{save_name}")
+
+        elif img_path != "":  # 参数为path
+            ret_img_url = func_img_to_url(img_path)
+
+    return (rmsg, reply_id, ret_img_url)
 
 
 def guild_at_msg_to_groupmsg(msg: msgs.Message, selfid) -> dict:
@@ -40,9 +76,19 @@ def guild_at_msg_to_groupmsg(msg: msgs.Message, selfid) -> dict:
         retmsg = msgcontent[:]
         at_msgs = re.findall("<@!\\d*>", msgcontent)
         for _at in at_msgs:
-            retmsg = retmsg.replace(_at, f"[CQ:at,qq={tooles.gettext_between(retmsg, '<@!', '>')}]", 1)
+            retmsg = retmsg.replace(_at, f"[CQ:at,qq={tools.gettext_between(retmsg, '<@!', '>')}]", 1)
 
         return retmsg
+
+    img_cq = ""
+    if msg.attachments is not None:  # 判断图片
+        for _im in msg.attachments:
+            if _im.content_type is not None:
+                if "image" in _im.content_type:
+                    msg_url = _im.url
+                    if not msg_url.startswith("http"):
+                        msg_url = f"http://{msg_url}"
+                    img_cq += f"[CQ:image,url={msg_url}]"
 
     if msgs.Codes.QBot.UserRole.owner in msg.member.roles:
         userRole = "owner"
@@ -67,7 +113,7 @@ def guild_at_msg_to_groupmsg(msg: msgs.Message, selfid) -> dict:
         "userguildid": msg.author.id,
         "user_id": msg.author.id,
         "anonymous": None,
-        "message": cq_code_convert(msg.content),
+        "message": cq_code_convert(msg.content) + img_cq,
         "raw_message": msg.content,
         "font": -1,
         "sender": {

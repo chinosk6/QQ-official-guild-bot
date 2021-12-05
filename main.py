@@ -21,6 +21,15 @@ app.reg_guild_delete()  # Bot离开频道/频道被解散事件
 app.reg_channel_create()  # 子频道创建事件
 app.reg_channel_update()  # 子频道信息更新事件
 app.reg_channel_delete()  # 子频道删除事件
+
+@app.bot.receiver(bot_api.structs.Codes.SeverCode.image_to_url)  # 注册一个图片转url方法
+def img_to_url(img_path: str):
+    # 用处: 发送图片时, 使用图片cq码[CQ:image,file=]或[CQ:image,url=]
+    # 装饰器作用为: 解析cq码中图片的路径(网络图片则下载到本地), 将绝对路径传给本函数, 自行操作后, 返回图片url, sdk将使用此url发送图片
+    # 若不注册此方法, 则无法发送图片。
+    print(img_path)
+    return "https://你的图片url"
+
 # 注册事件结束
 
 

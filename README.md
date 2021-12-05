@@ -1,8 +1,7 @@
 # QQ官方频道机器人SDK
 
-- 自用, 只实现了部分API
+- 只实现了部分API
 - 添加[onebot11](https://11.onebot.dev/)支持(半成品, 而且api差距过大, 很难做到完全兼容)
-- 暂未添加图片消息相关支持
 - 暂未添加`ark`消息支持
 
 
@@ -18,6 +17,15 @@ import bot_api
 bot = bot_api.BotApp(123456, "你的bot token", "你的bot secret",
                      is_sandbox=True, debug=True, api_return_pydantic=True,
                      inters=[bot_api.Intents.GUILDS, bot_api.Intents.AT_MESSAGES, bot_api.Intents.GUILD_MEMBERS])  # 事件订阅
+
+
+@bot.receiver(bot_api.structs.Codes.SeverCode.image_to_url)  # 注册一个图片转url方法
+def img_to_url(img_path: str):
+    # 用处: 发送图片时, 使用图片cq码[CQ:image,file=]或[CQ:image,url=]
+    # 装饰器作用为: 解析cq码中图片的路径(网络图片则下载到本地), 将绝对路径传给本函数, 自行操作后, 返回图片url, sdk将使用此url发送图片
+    # 若不注册此方法, 则无法发送图片。
+    print(img_path)
+    return "https://你的图片url"
 
 
 @bot.receiver(bot_api.structs.Codes.SeverCode.BotGroupAtMessage)  # 填入对应的参数实现处理对应事件
@@ -71,6 +79,15 @@ app.reg_guild_delete()  # Bot离开频道/频道被解散事件
 app.reg_channel_create()  # 子频道创建事件
 app.reg_channel_update()  # 子频道信息更新事件
 app.reg_channel_delete()  # 子频道删除事件
+
+@app.bot.receiver(bot_api.structs.Codes.SeverCode.image_to_url)  # 注册一个图片转url方法
+def img_to_url(img_path: str):
+    # 用处: 发送图片时, 使用图片cq码[CQ:image,file=]或[CQ:image,url=]
+    # 装饰器作用为: 解析cq码中图片的路径(网络图片则下载到本地), 将绝对路径传给本函数, 自行操作后, 返回图片url, sdk将使用此url发送图片
+    # 若不注册此方法, 则无法发送图片。
+    print(img_path)
+    return "https://你的图片url"
+
 # 注册事件结束
 
 app.listening_server_start()  # HTTP API 服务器启动
@@ -81,10 +98,11 @@ app.bot.start()  # Bot启动
 
 ### 目前实现的CQ码
 
-| CQ码                 | 功能     | 备注                                               |
-| -------------------- | -------- | -------------------------------------------------- |
-| [CQ:reply,id=abc123] | 回复消息 | 被动回复请务必带上此CQ码, 否则会被视为主动推送消息 |
-| [CQ:at,qq=123456]    | 艾特用户 | 与官方<@!123456>对应                               |
+| CQ码                                      | 功能     | 备注                                                         |
+| ----------------------------------------- | -------- | ------------------------------------------------------------ |
+| [CQ:reply,id=abc123]                      | 回复消息 | 被动回复请务必带上此CQ码, 否则会被视为主动推送消息           |
+| [CQ:at,qq=123456]                         | 艾特用户 | 与官方<@!123456>对应                                         |
+| [CQ:image,file=...]<br>[CQ:image,url=...] | 发送图片 | 发送图片可以使用这两个CQ码<br>由于API限制, 发送图片仅支持一张, 并且需要自行配置图床(见上方代码示例)<br>接收到图片时, 目前仅会返回[CQ:image,url=...] |
 
 
 
@@ -96,10 +114,10 @@ app.bot.start()  # Bot启动
 
 - 特别注意: 所有`用户ID`, `频道号`, `子频道号`, `消息ID`字段均为`string`
 
-| 接口                   | 描述         | 备注                                                         |
-| ---------------------- | ------------ | ------------------------------------------------------------ |
-| /send_group_msg        | 发送群消息   | `group_id`字段请填写`channel_id`<br>不支持`auto_escape`字段  |
-| /get_group_member_info | 获取成员信息 | `group_id`请填写`guild_id`<br>仅`user_id`,`nickname`,`role`有效<br>增加字段: `avatar` |
+| 接口                                                         | 描述         | 备注                                                         |
+| ------------------------------------------------------------ | ------------ | ------------------------------------------------------------ |
+| [/send_group_msg](https://github.com/botuniverse/onebot-11/blob/master/api/public.md#send_group_msg-%E5%8F%91%E9%80%81%E7%BE%A4%E6%B6%88%E6%81%AF) | 发送群消息   | `group_id`请填写`channel_id`<br>不支持`auto_escape`          |
+| [/get_group_member_info](https://github.com/botuniverse/onebot-11/blob/master/api/public.md#get_group_member_info-%E8%8E%B7%E5%8F%96%E7%BE%A4%E6%88%90%E5%91%98%E4%BF%A1%E6%81%AF) | 获取成员信息 | `group_id`请填写`guild_id`<br>仅`user_id`,`nickname`,`role`有效<br>额外增加头像URL: `avatar` |
 
 
 

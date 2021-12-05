@@ -2,7 +2,7 @@ import json
 
 import bot_api
 from . import message_convert
-from . import tooles
+from . import tools
 import requests
 
 
@@ -13,9 +13,10 @@ class MessageSender:
         self.port_call = port_call
 
 
-    @tooles.on_new_thread
+    @tools.on_new_thread
     def _send_request(self, msg: str, method="POST"):
         try:
+            self.bot.logger(f"推送事件: {msg}", debug=True)
             headers = {'Content-Type': 'application/json'}
             requests.request(method=method, url=f"http://{self.ip_call}:{self.port_call}", data=msg, headers=headers)
         except Exception as sb:
