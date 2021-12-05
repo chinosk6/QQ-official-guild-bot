@@ -19,15 +19,6 @@ bot = bot_api.BotApp(123456, "你的bot token", "你的bot secret",
                      inters=[bot_api.Intents.GUILDS, bot_api.Intents.AT_MESSAGES, bot_api.Intents.GUILD_MEMBERS])  # 事件订阅
 
 
-@bot.receiver(bot_api.structs.Codes.SeverCode.image_to_url)  # 注册一个图片转url方法
-def img_to_url(img_path: str):
-    # 用处: 发送图片时, 使用图片cq码[CQ:image,file=]或[CQ:image,url=]
-    # 装饰器作用为: 解析cq码中图片的路径(网络图片则下载到本地), 将绝对路径传给本函数, 自行操作后, 返回图片url, sdk将使用此url发送图片
-    # 若不注册此方法, 则无法发送图片。
-    print(img_path)
-    return "https://你的图片url"
-
-
 @bot.receiver(bot_api.structs.Codes.SeverCode.BotGroupAtMessage)  # 填入对应的参数实现处理对应事件
 def get_at_message(chain: bot_api.structs.Message):  # 注册一个艾特消息处理器
     bot.logger(f"收到来自频道:{chain.guild_id} 子频道: {chain.channel_id} "
