@@ -42,6 +42,8 @@ def cq_to_guild_text(msg: str, func_img_to_url, auto_escape=False):
             img_path = _file[0][len("file="):-1 if _file[0].endswith(',') else None]
             if img_path.startswith("http"):
                 img_url = img_path
+            elif img_path.startswith("file:///"):
+                img_path = img_path[8:]
 
         _url = re.findall("url=[^,]*", ps)  # 查找url参数
         if _url:
