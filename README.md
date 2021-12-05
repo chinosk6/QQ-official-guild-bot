@@ -1,14 +1,14 @@
 # QQ官方频道机器人SDK
 
 - 只实现了部分API
-- 添加[onebot11](https://11.onebot.dev/)支持(半成品, 而且api差距过大, 很难做到完全兼容)
+- 添加[onebot11](https://11.onebot.dev/)支持(api差距过大, 很难做到完全兼容)
 - 暂未添加`ark`消息支持
 
 
 
 # 直接使用SDK
 
-- 参考`main_bot.py`
+- 参考`bot_main.py`
 - 没有文档, 代码补全很完善了
 
 ```python
@@ -116,7 +116,7 @@ app.bot.start()  # Bot启动
 
 | 接口                                                         | 描述         | 备注                                                         |
 | ------------------------------------------------------------ | ------------ | ------------------------------------------------------------ |
-| [/send_group_msg](https://github.com/botuniverse/onebot-11/blob/master/api/public.md#send_group_msg-%E5%8F%91%E9%80%81%E7%BE%A4%E6%B6%88%E6%81%AF) | 发送群消息   | `group_id`请填写`channel_id`<br>不支持`auto_escape`          |
+| [/send_group_msg](https://github.com/botuniverse/onebot-11/blob/master/api/public.md#send_group_msg-%E5%8F%91%E9%80%81%E7%BE%A4%E6%B6%88%E6%81%AF) | 发送群消息   | `group_id`请填写`channel_id`<br>`auto_escape`为true时, 依然会解析[CQ:reply] |
 | [/get_group_member_info](https://github.com/botuniverse/onebot-11/blob/master/api/public.md#get_group_member_info-%E8%8E%B7%E5%8F%96%E7%BE%A4%E6%88%90%E5%91%98%E4%BF%A1%E6%81%AF) | 获取成员信息 | `group_id`请填写`guild_id`<br>仅`user_id`,`nickname`,`role`有效<br>额外增加头像URL: `avatar` |
 
 

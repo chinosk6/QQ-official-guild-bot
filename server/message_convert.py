@@ -13,7 +13,7 @@ def time2timestamp(time_iso8601: str):
     return int(d)
 
 
-def cq_to_guild_text(msg: str, func_img_to_url):
+def cq_to_guild_text(msg: str, func_img_to_url, auto_escape=False):
     rmsg = msg[:]
     reply = re.findall("\\[CQ:reply,id=\\w*]", msg)
     if reply:  # 替换回复
@@ -21,6 +21,9 @@ def cq_to_guild_text(msg: str, func_img_to_url):
         rmsg = rmsg.replace(reply[0], "")
     else:
         reply_id = ""
+
+    if auto_escape:
+        return (rmsg, reply_id, "")
 
     at = re.findall("\\[CQ:at,qq=\\w*]", msg)
     for _a in at:  # 替换艾特
@@ -59,6 +62,10 @@ def cq_to_guild_text(msg: str, func_img_to_url):
 
         elif img_path != "":  # 参数为path
             ret_img_url = func_img_to_url(img_path)
+
+    others_cq = re.findall("\\[CQ:[^]]*]", rmsg)
+    for ocq in others_cq:
+        rmsg = rmsg.replace(ocq, "", 1)  # 去除其它不受支持的CQ码
 
     return (rmsg, reply_id, ret_img_url)
 

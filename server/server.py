@@ -32,8 +32,9 @@ class BotServer(sender.MessageSender):
     def send_group_msg(self):
         channel_id = request.args.get("group_id")
         message = request.args.get("message")
+        auto_escape = request.args.get("auto_escape")
 
-        cmsg, reply_msg_id, img_url = message_convert.cq_to_guild_text(message, self.bot.img_to_url)
+        cmsg, reply_msg_id, img_url = message_convert.cq_to_guild_text(message, self.bot.img_to_url, auto_escape)
         if not self.allow_push and reply_msg_id == "":
             self.bot.logger("不发送允许PUSH消息, 请添加回复id, 或者将\"allow_push\"设置为True", warning=True)
         else:
