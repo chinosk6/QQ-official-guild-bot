@@ -17,6 +17,7 @@ from bot_api.models import Ark, Embed
 
 bot = bot_api.BotApp(123456, "你的bot token", "你的bot secret",
                      is_sandbox=True, debug=True, api_return_pydantic=True,
+                     ignore_at_self=False,  # 过滤消息正文中艾特Bot自身的内容, 默认为False
                      inters=[bot_api.Intents.GUILDS, bot_api.Intents.AT_MESSAGES, bot_api.Intents.GUILD_MEMBERS])  # 事件订阅
 
 
@@ -48,17 +49,43 @@ bot.start()  # 启动bot
 
 
 
+### 自行组合消息
+
+`api_send_reply_message`接口提供了极高的自由度。您可以按照本文档提供的方法发送消息, 也可以使用`others_parameter`参数自行组合。
+
+使用此`others_parameter`, 您需要按照 [QQ机器人文档 - 发送消息](https://bot.q.qq.com/wiki/develop/api/openapi/message/post_messages.html) 提供的参数发送消息, 若有此SDK没有支持的消息类型, 您依旧可以自行组合参数进行发送。
+
+下面是发送一条文本+图片消息的例子
+
+-----
+
+  - 一般情况下, 您可以:
+
+```python
+bot.api_send_reply_message(chain.channel_id, chain.id, "这是消息", "http://您的图片")
+```
+
+  - 您也可以:
+
+```python
+bot.api_send_reply_message(chain.channel_id, chain.id, others_parameter={"content": "这是消息", "image": "https://您的图片"})
+```
+
+
+
+
+
 ## Ark消息说明
 
 - 注意: 发送Ark消息需要向官方申请Ark权限, 否则无法发送
 
-- 引用: 
+### 引用: 
 
 ```python
 from bot_api.models import Ark, Embed
 ```
 
-- 发送[Embed](https://bot.q.qq.com/wiki/develop/api/openapi/message/template/embed_message.html)消息
+### 发送[Embed](https://bot.q.qq.com/wiki/develop/api/openapi/message/template/embed_message.html)消息
 
 ```python
 send_embed = Embed("标题", ["文本1", "文本2", "文本3"], image_url="http://你的图片")
@@ -67,7 +94,8 @@ send_embed = Embed("标题", ["文本1", "文本2", "文本3"], image_url="http:
 bot.api_send_reply_message(channel_id, message_id, embed=send_embed)
 ```
 
-- 发送[Ark](https://bot.q.qq.com/wiki/develop/api/openapi/message/message_template.html)消息
+### 发送[Ark](https://bot.q.qq.com/wiki/develop/api/openapi/message/message_template.html)消息
+
 - `Ark`类中目前有`LinkWithText`, `TextAndThumbnail`, `BigImage`三个子类, 分别对应 [23 链接+文本列表模板](https://bot.q.qq.com/wiki/develop/api/openapi/message/template/template_23.html), [24 文本+缩略图模板](https://bot.q.qq.com/wiki/develop/api/openapi/message/template/template_24.html), [37 大图模板](https://bot.q.qq.com/wiki/develop/api/openapi/message/template/template_37.html), 下面以构造相对复杂的 [23 链接+文本列表模板 ](https://bot.q.qq.com/wiki/develop/api/openapi/message/template/template_23.html)为例
 
 ```python

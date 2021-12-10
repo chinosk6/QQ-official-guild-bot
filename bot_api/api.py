@@ -88,7 +88,7 @@ class BotApi:
         """
 
         url = f"{self.base_api}/channels/{channel_id}/messages"
-        if content == "" and image_url == "" and embed is None and ark is None:
+        if content == "" and image_url == "" and embed is None and ark is None and others_parameter is None:
             self.logger("消息为空, 请检查", error=True)
             return None
 
