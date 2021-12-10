@@ -72,17 +72,31 @@ class BotApi:
 
         self._cache = {}
 
-    def api_send_reply_message(self, channel_id: str, msg_id="", content="", image_url="", retstr=False) \
+    def api_send_reply_message(self, channel_id: str, msg_id="", content="", image_url="", retstr=False,
+                               embed=None, ark=None, others_parameter: t.Optional[t.Dict] = None) \
             -> t.Union[str, structs.Message, None]:
+        """
+        发送消息
+        :param channel_id: 子频道ID
+        :param msg_id: 消息ID, 可空
+        :param content: 消息内容, 可空
+        :param image_url: 图片url, 可空
+        :param retstr: 调用此API后返回纯文本
+        :param embed: embed消息, 可空
+        :param ark: ark消息, 可空
+        :param others_parameter: 其它自定义字段
+        """
 
         url = f"{self.base_api}/channels/{channel_id}/messages"
-        if content == "" and image_url == "":
+        if content == "" and image_url == "" and embed is None and ark is None:
             self.logger("消息为空, 请检查", error=True)
             return None
 
         _c = {"content": content} if content != "" else None
         _im = {"image": image_url} if image_url != "" else None
         _msgid = {"msg_id": msg_id} if msg_id != "" else None
+        _embed = embed.ark_to_json() if callable(getattr(embed, "ark_to_json", None)) else None
+        _ark = ark.ark_to_json() if callable(getattr(ark, "ark_to_json", None)) else None
 
         def merge_dict(*args) -> dict:
             merged = {}
@@ -90,10 +104,9 @@ class BotApi:
                 if _d is not None:
                     merged = {**merged, **_d}
 
-            print(merged)
             return merged
 
-        payload = json.dumps(merge_dict(_c, _im, _msgid))
+        payload = json.dumps(merge_dict(_c, _im, _msgid, _embed, _ark, others_parameter))
 
         response = requests.request("POST", url, headers=self.__headers, data=payload)
         data = json.loads(response.text)

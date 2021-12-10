@@ -1,6 +1,7 @@
 from . import inter
 from . import structs
 from . import api
+from . import models
 from .structs import Codes as BCd
 import websocket
 import json
@@ -17,10 +18,16 @@ class Intents:  # https://bot.q.qq.com/wiki/develop/api/gateway/intents.html
     AUDIO_ACTION = 1 << 29
     AT_MESSAGES = 1 << 30
 
+def on_new_thread(f):
+    def task_qwq(*args, **kwargs):
+        _t = Thread(target=f, args=args, kwargs=kwargs)
+        _t.start()
+    return (task_qwq)
+
 
 class BotApp(inter.BotMessageDistributor):
     def __init__(self, appid: int, token: str, secret: str, is_sandbox: bool, inters: t.List,
-                 debug=False, api_return_pydantic=False):
+                 debug=False, api_return_pydantic=False, ignore_at_self=False):
         """
         BotAPP
         :param appid: BotAPPId
@@ -30,16 +37,21 @@ class BotApp(inter.BotMessageDistributor):
         :param inters: 接收事件
         :param debug: 输出debug日志
         :param api_return_pydantic: 调用api后返回pydantic对象, 默认为纯文本
+        :param ignore_at_self: 过滤消息中艾特bot的内容
         """
         super().__init__(appid=appid, token=token, secret=secret, sandbox=is_sandbox, debug=debug,
                          api_return_pydantic=api_return_pydantic)
         self.inters = inters
+        self.ignore_at_self = ignore_at_self
+        self.self_id = ""
+        self.self_name = ""
         self.session_id = None
         self._d = None  # 心跳参数
         self._t = None
         self.heartbeat_time = -1  # 心跳间隔
         self.ws = None
 
+    # @on_new_thread
     def start(self):
         if not self.bot_at_message_group:
             self.logger("未注册艾特消息处理器", warning=True)
@@ -118,6 +130,8 @@ class BotApp(inter.BotMessageDistributor):
                         self.logger("重连完成, 事件已全部补发")
 
                     elif s_type == BCd.QBot.GatewayEventName.AT_MESSAGE_CREATE:  # 用户艾特Bot
+                        if self.ignore_at_self:
+                            data["d"]["content"] = data["d"]["content"].replace(f"<@!{self.self_id}>", "").strip()
                         self._event_handout(self.bot_at_message_group, structs.Message(**data["d"]))
 
                     elif s_type == BCd.QBot.GatewayEventName.GUILD_CREATE:  # bot加入频道
@@ -171,6 +185,8 @@ class BotApp(inter.BotMessageDistributor):
 
     def _on_open(self, botid="", botname="", isbot="", is_login=False):
         if is_login:
+            self.self_id = botid
+            self.self_name = botname
             self.logger(f"开始运行:\nBotID: {botid}\nBotName: {botname}\nbot: {isbot}")
         else:
             self.logger("开始尝试连接")

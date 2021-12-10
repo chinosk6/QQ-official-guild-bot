@@ -47,7 +47,7 @@ class Codes:
 class User(BaseModel):  # 用户对象
     id: str
     username: str
-    avatar: str
+    avatar: t.Optional[str]
     bot: bool
     union_openid: t.Optional[str]
     union_user_account: t.Optional[str]

@@ -2,7 +2,6 @@
 
 - 只实现了部分API
 - 添加[onebot11](https://11.onebot.dev/)支持(api差距过大, 很难做到完全兼容)
-- 暂未添加`ark`消息支持
 
 
 
@@ -13,6 +12,8 @@
 
 ```python
 import bot_api
+from bot_api.models import Ark, Embed
+
 
 bot = bot_api.BotApp(123456, "你的bot token", "你的bot secret",
                      is_sandbox=True, debug=True, api_return_pydantic=True,
@@ -30,12 +31,49 @@ def get_at_message(chain: bot_api.structs.Message):  # 注册一个艾特消息�
         bot.api_send_reply_message(chain.channel_id, chain.id, "chieri在哟~")
     elif "/echo" in chain.content:
         reply = chain.content[chain.content.find("/echo") + len("/echo"):].strip()
-
         bot.api_send_reply_message(chain.channel_id, chain.id, reply)
+        
+    elif "/embed" in chain.content:  # 发送embed, 需要Ark权限
+        send_embed = Embed("标题", ["文本1", "文本2", "文本3"], image_url=None)
+        bot.api_send_reply_message(chain.channel_id, chain.id, embed=send_embed)
+
+    elif "/ark" in chain.content:  # 发送ark消息, 需要Ark权限
+        send_ark = Ark.LinkWithText("描述", "提示信息", [["纯文本1"], ["纯文本2"], ["链接文本1", "http:baidu.com"]])
+        bot.api_send_reply_message(chain.channel_id, chain.id, embed=send_ark)
 
 
 bot.start()  # 启动bot
 
+```
+
+
+
+## Ark消息说明
+
+- 注意: 发送Ark消息需要向官方申请Ark权限, 否则无法发送
+
+- 引用: 
+
+```python
+from bot_api.models import Ark, Embed
+```
+
+- 发送[Embed](https://bot.q.qq.com/wiki/develop/api/openapi/message/template/embed_message.html)消息
+
+```python
+send_embed = Embed("标题", ["文本1", "文本2", "文本3"], image_url="http://你的图片")
+"image_url"参数可选, 若没有图片, 则不填
+
+bot.api_send_reply_message(channel_id, message_id, embed=send_embed)
+```
+
+- 发送[Ark](https://bot.q.qq.com/wiki/develop/api/openapi/message/message_template.html)消息
+- `Ark`类中目前有`LinkWithText`, `TextAndThumbnail`, `BigImage`三个子类, 分别对应 [23 链接+文本列表模板](https://bot.q.qq.com/wiki/develop/api/openapi/message/template/template_23.html), [24 文本+缩略图模板](https://bot.q.qq.com/wiki/develop/api/openapi/message/template/template_24.html), [37 大图模板](https://bot.q.qq.com/wiki/develop/api/openapi/message/template/template_37.html), 下面以构造相对复杂的 [23 链接+文本列表模板 ](https://bot.q.qq.com/wiki/develop/api/openapi/message/template/template_23.html)为例
+
+```python
+send_ark = Ark.LinkWithText("描述", "提示信息", [["纯文本1"], ["纯文本2"], ["链接文本1", "http:baidu.com"], ["链接文本2", "http:google.com"]])
+
+bot.api_send_reply_message(channel_id, message_id, ark=send_ark)
 ```
 
 
