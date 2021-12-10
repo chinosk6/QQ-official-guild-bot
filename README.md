@@ -51,9 +51,9 @@ bot.start()  # 启动bot
 
 ### 自行组合消息
 
-`api_send_reply_message`接口提供了极高的自由度。您可以按照本文档提供的方法发送消息, 也可以使用`others_parameter`参数自行组合。
+`api_send_reply_message`方法提供了极高的自由度。您可以按照本文档提供的方法发送消息, 也可以使用`others_parameter`参数自行组合。
 
-使用此`others_parameter`, 您需要按照 [QQ机器人文档 - 发送消息](https://bot.q.qq.com/wiki/develop/api/openapi/message/post_messages.html) 提供的参数发送消息, 若有此SDK没有支持的消息类型, 您依旧可以自行组合参数进行发送。
+使用`others_parameter`, 您需要按照 [QQ机器人文档 - 发送消息](https://bot.q.qq.com/wiki/develop/api/openapi/message/post_messages.html) 提供的参数发送消息, 若有此SDK没有支持的消息类型, 您依旧可以自行组合参数进行发送。
 
 下面是发送一条文本+图片消息的例子
 
