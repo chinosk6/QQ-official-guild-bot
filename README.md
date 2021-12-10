@@ -39,7 +39,7 @@ def get_at_message(chain: bot_api.structs.Message):  # 注册一个艾特消息�
 
     elif "/ark" in chain.content:  # 发送ark消息, 需要Ark权限
         send_ark = Ark.LinkWithText("描述", "提示信息", [["纯文本1"], ["纯文本2"], ["链接文本1", "http:baidu.com"]])
-        bot.api_send_reply_message(chain.channel_id, chain.id, embed=send_ark)
+        bot.api_send_reply_message(chain.channel_id, chain.id, ark=send_ark)
 
 
 bot.start()  # 启动bot
