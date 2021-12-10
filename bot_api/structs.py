@@ -78,8 +78,8 @@ class MessageEmbedField(BaseModel):
 class MessageEmbed(BaseModel):
     title: str
     description: str
-    prompt: str
-    timestamp: str
+    prompt: t.Optional[str]
+    timestamp: t.Optional[str]
     fields: t.List[MessageEmbedField]
 
 class MessageArkObjKv(BaseModel):
