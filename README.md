@@ -99,7 +99,7 @@ bot.api_send_reply_message(channel_id, message_id, embed=send_embed)
 - `Ark`类中目前有`LinkWithText`, `TextAndThumbnail`, `BigImage`三个子类, 分别对应 [23 链接+文本列表模板](https://bot.q.qq.com/wiki/develop/api/openapi/message/template/template_23.html), [24 文本+缩略图模板](https://bot.q.qq.com/wiki/develop/api/openapi/message/template/template_24.html), [37 大图模板](https://bot.q.qq.com/wiki/develop/api/openapi/message/template/template_37.html), 下面以构造相对复杂的 [23 链接+文本列表模板 ](https://bot.q.qq.com/wiki/develop/api/openapi/message/template/template_23.html)为例
 
 ```python
-send_ark = Ark.LinkWithText("描述", "提示信息", [["纯文本1"], ["纯文本2"], ["链接文本1", "http:baidu.com"], ["链接文本2", "http:google.com"]])
+send_ark = Ark.LinkWithText("描述", "提示信息", [["纯文本1"], ["纯文本2"], ["链接文本1", "http://baidu.com"], ["链接文本2", "http//:google.com"]])
 
 bot.api_send_reply_message(channel_id, message_id, ark=send_ark)
 ```
