@@ -3,6 +3,7 @@ import json
 from . import structs
 import typing as t
 import time
+from . import models
 
 
 class ColorfulPrint:
@@ -120,12 +121,251 @@ class BotApi:
         else:
             return response.text
 
-    def get_guild_info(self, guiid_id, retstr=False) -> t.Union[str, structs.Guild, None]:
+    def api_mute_guiid(self, guild_id, mute_seconds="", mute_end_timestamp=""):
+        """
+        全频道禁言, 秒数/时间戳二选一
+        :param guild_id: 频道ID
+        :param mute_seconds: 禁言秒数
+        :param mute_end_timestamp: 禁言截止时间戳
+        :return: 若成功, 返回空字符串; 失败则返回错误信息
+        """
+        url = f"{self.base_api}/guilds/{guild_id}/mute?"
+        _up = f"mute_end_timestamp={mute_end_timestamp}" if mute_end_timestamp != "" else f"mute_seconds={mute_seconds}"
+        url = f"{url}{_up}"
+        response = requests.request("PATCH", url, headers=self.__headers)
+        if response.status_code != 204:
+            data = response.text
+            self.logger(f"禁言成员失败: {data}")
+        else:
+            return ""
+
+    def api_mute_member(self, guild_id, member_id, mute_seconds="", mute_end_timestamp="") -> str:
+        """
+        指定用户禁言, 秒数/时间戳二选一
+        :param guild_id: 频道ID
+        :param member_id: 用户ID
+        :param mute_seconds: 禁言秒数
+        :param mute_end_timestamp: 禁言截止时间戳
+        :return: 若成功, 返回空字符串; 失败则返回错误信息
+        """
+        url = f"{self.base_api}/guilds/{guild_id}/members/{member_id}/mute?"
+        _up = f"mute_end_timestamp={mute_end_timestamp}" if mute_end_timestamp != "" else f"mute_seconds={mute_seconds}"
+        url = f"{url}{_up}"
+        response = requests.request("PATCH", url, headers=self.__headers)
+        if response.status_code != 204:
+            data = response.text
+            self.logger(f"禁言成员失败: {data}")
+            return data
+        else:
+            return ""
+
+    def api_get_self_guilds(self, before="", after="", limit="100", use_cache=False, retstr=False) \
+            -> t.Union[str, t.List[structs.Guild], None]:
+        """
+        获取Bot加入的频道列表
+        :param before: 读此id之前的数据(before/after 只能二选一)
+        :param after: 读此id之后的数据(before/after 只能二选一)
+        :param limit: 每次拉取条数
+        :param use_cache: 使用缓存
+        :param retstr: 强制返回纯文本
+        """
+        return self.get_self_guilds(before=before, after=after, limit=limit, use_cache=use_cache, retstr=retstr)
+
+    def api_get_self_info(self, use_cache=False):
+        """
+        获取Bot自身信息
+        """
+        return self.get_self_info(use_cache=use_cache)
+
+    def api_get_message(self, channel_id, message_id, retstr=False) -> t.Union[str, structs.Message, None]:
+        """
+        获取指定消息
+        :param channel_id: 子频道id
+        :param message_id: 消息id
+        :param retstr: 强制返回纯文本
+        """
+        return self.get_message(channel_id=channel_id, message_id=message_id, retstr=retstr)
+
+    def api_get_guild_channel_list(self, guiid_id, retstr=False) -> t.Union[str, t.List[structs.Channel], None]:
+        """
+        获取频道内子频道列表
+        :param guiid_id: 频道id
+        :param retstr: 强制返回纯文本
+        """
+        return self.get_guild_channel_list(guiid_id=guiid_id, retstr=retstr)
+
+    def api_get_channel_info(self, channel_id, retstr=False) -> t.Union[str, structs.Channel, None]:
+        """
+        获取子频道信息
+        :param channel_id: 频道id
+        :param retstr: 强制返回纯文本
+        """
+        return self.get_channel_info(channel_id=channel_id, retstr=retstr)
+
+    def api_get_guild_user_info(self, guiid_id, member_id, retstr=False) -> t.Union[str, structs.Member, None]:
+        """
+        获取频道用户信息
+        :param guiid_id: 频道id
+        :param member_id: 用户id
+        :param retstr: 强制返回纯文本
+        """
+        return self.get_guild_user_info(guiid_id=guiid_id, member_id=member_id, retstr=retstr)
+
+    def api_get_guild_info(self, guiid_id, retstr=False) -> t.Union[str, structs.Guild, None]:
         """
         获取频道信息
         :param guiid_id: 频道id
         :param retstr: 强制返回纯文本
         """
+        return self.get_guild_info(guiid_id=guiid_id, retstr=retstr)
+
+    def api_get_schedule_list(self, channel_id, retstr=False) -> t.Union[str, t.List[structs.Schedule], None]:
+        """
+        获取子频道日程列表
+        :param channel_id: 子频道ID
+        :param retstr: 强制返回纯文本
+        :return: 日程列表(若为空, 则返回 None)
+        """
+        url = f"{self.base_api}/channels/{channel_id}/schedules"
+        response = requests.request("GET", url, headers=self.__headers)
+        data = json.loads(response.text)
+        if "code" in data:
+            self.logger(f"获取日程列表失败: {response.text}", error=True)
+            if retstr:
+                return response.text
+            return None
+        elif self.api_return_pydantic and not retstr:
+            if data is not None:
+                return [structs.Schedule(**_d) for _d in data]
+            else:
+                return None
+        else:
+            return response.text
+
+    def api_get_schedule(self, channel_id, schedule_id, retstr=False) -> t.Union[str, structs.Schedule, None]:
+        """
+        获取单个日程信息
+        :param channel_id: 子频道ID
+        :param schedule_id: 日程ID
+        :param retstr: 强制返回纯文本
+        :return: 单个日程信息(若为空, 则返回 None)
+        """
+        url = f"{self.base_api}/channels/{channel_id}/schedules/{schedule_id}"
+        response = requests.request("GET", url, headers=self.__headers)
+        data = json.loads(response.text)
+        if "code" in data:
+            self.logger(f"获取日程信息失败: {response.text}", error=True)
+            if retstr:
+                return response.text
+            return None
+        elif self.api_return_pydantic and not retstr:
+            if data is not None:
+                return structs.Schedule(**data)
+            else:
+                return None
+        else:
+            return response.text
+
+    def api_schedule_create(self, channel_id, name: str, description: str, start_timestamp: str, end_timestamp: str,
+                            jump_channel_id: str, remind_type: str, retstr=False) -> t.Union[str, structs.Schedule,
+                                                                                             None]:
+        """
+        创建日程
+        :param channel_id: 子频道ID
+        :param name: 日程标题
+        :param description: 日程描述
+        :param start_timestamp: 开始时间, 13位时间戳
+        :param end_timestamp: 结束时间, 13位时间戳
+        :param jump_channel_id: 日程跳转频道ID
+        :param remind_type: 日程提醒类型, 见: https://bot.q.qq.com/wiki/develop/api/openapi/schedule/model.html#remindtype
+        :param retstr: 强制返回纯文本
+        :return: 新创建的日程
+        """
+        url = f"{self.base_api}/channels/{channel_id}/schedules"
+        payload = json.dumps(models.schedule_json(name, description, start_timestamp, end_timestamp,
+                                                  jump_channel_id, remind_type))
+        response = requests.request("POST", url, headers=self.__headers, data=payload)
+        data = json.loads(response.text)
+        if "code" in data:
+            self.logger(f"创建日程失败: {response.text}", error=True)
+            if retstr:
+                return response.text
+            return None
+        elif self.api_return_pydantic and not retstr:
+            if data is not None:
+                return structs.Schedule(**data)
+            else:
+                return None
+        else:
+            return response.text
+
+    def api_schedule_change(self, channel_id, schedule_id, name: str, description: str, start_timestamp: str,
+                            end_timestamp: str, jump_channel_id: str, remind_type: str, retstr=False)\
+            -> t.Union[str, structs.Schedule,  None]:
+        """
+        修改日程
+        :param channel_id: 子频道ID
+        :param schedule_id: 日程ID
+        :param name: 日程标题
+        :param description: 日程描述
+        :param start_timestamp: 开始时间, 13位时间戳
+        :param end_timestamp: 结束时间, 13位时间戳
+        :param jump_channel_id: 日程跳转频道ID
+        :param remind_type: 日程提醒类型, 见: https://bot.q.qq.com/wiki/develop/api/openapi/schedule/model.html#remindtype
+        :param retstr: 强制返回纯文本
+        :return: 修改后的日程
+        """
+        url = f"{self.base_api}/channels/{channel_id}/schedules/{schedule_id}"
+        payload = json.dumps(models.schedule_json(name, description, start_timestamp, end_timestamp,
+                                                  jump_channel_id, remind_type))
+        response = requests.request("PATCH", url, headers=self.__headers, data=payload)
+        data = json.loads(response.text)
+        if "code" in data:
+            self.logger(f"创建日程失败: {response.text}", error=True)
+            if retstr:
+                return response.text
+            return None
+        elif self.api_return_pydantic and not retstr:
+            if data is not None:
+                return structs.Schedule(**data)
+            else:
+                return None
+        else:
+            return response.text
+
+    def api_schedule_delete(self, channel_id, schedule_id):
+        """
+        删除日程
+        :param channel_id: 子频道ID
+        :param schedule_id: 日程ID
+        :return: 成功返回空字符串, 失败返回错误信息
+        """
+        url = f"{self.base_api}/channels/{channel_id}/schedules/{schedule_id}"
+        response = requests.request("DELETE", url, headers=self.__headers)
+        if response.status_code != 204:
+            data = response.text
+            self.logger(f"日程删除失败: {data}")
+            return data
+        else:
+            return ""
+
+    def api_message_recall(self, channel_id, message_id):
+        """
+        撤回消息
+        :param channel_id: 频道ID
+        :param message_id: 消息ID
+        :return: 成功返回空字符串, 失败返回错误信息
+        """
+        url = f"{self.base_api}/channels/{channel_id}/messages/{message_id}"
+        response = requests.request("DELETE", url, headers=self.__headers)
+        if response.status_code != 200:
+            data = response.text
+            self.logger(f"撤回消息失败: {data}")
+            return data
+        else:
+            return ""
+
+    def get_guild_info(self, guiid_id, retstr=False) -> t.Union[str, structs.Guild, None]:
         url = f"{self.base_api}/guilds/{guiid_id}"
         response = requests.request("GET", url, headers=self.__headers)
         data = json.loads(response.text)
@@ -140,12 +380,6 @@ class BotApi:
             return response.text
 
     def get_guild_user_info(self, guiid_id, member_id, retstr=False) -> t.Union[str, structs.Member, None]:
-        """
-        获取频道用户信息
-        :param guiid_id: 频道id
-        :param member_id: 用户id
-        :param retstr: 强制返回纯文本
-        """
         url = f"{self.base_api}/guilds/{guiid_id}/members/{member_id}"
         response = requests.request("GET", url, headers=self.__headers)
         data = json.loads(response.text)
@@ -163,11 +397,6 @@ class BotApi:
             return response.text
 
     def get_channel_info(self, channel_id, retstr=False) -> t.Union[str, structs.Channel, None]:
-        """
-        获取子频道信息
-        :param channel_id: 频道id
-        :param retstr: 强制返回纯文本
-        """
         url = f"{self.base_api}/channels/{channel_id}"
         response = requests.request("GET", url, headers=self.__headers)
         data = json.loads(response.text)
@@ -182,11 +411,6 @@ class BotApi:
             return response.text
 
     def get_guild_channel_list(self, guiid_id, retstr=False) -> t.Union[str, t.List[structs.Channel], None]:
-        """
-        获取频道内子频道列表
-        :param guiid_id: 频道id
-        :param retstr: 强制返回纯文本
-        """
         url = f"{self.base_api}/guilds/{guiid_id}/channels"
         response = requests.request("GET", url, headers=self.__headers)
         data = json.loads(response.text)
@@ -201,12 +425,6 @@ class BotApi:
             return response.text
 
     def get_message(self, channel_id, message_id, retstr=False) -> t.Union[str, structs.Message, None]:
-        """
-        获取指定消息
-        :param channel_id: 子频道id
-        :param message_id: 消息id
-        :param retstr: 强制返回纯文本
-        """
         url = f"{self.base_api}/channels/{channel_id}/messages/{message_id}"
         response = requests.request("GET", url, headers=self.__headers)
         data = json.loads(response.text)
@@ -221,9 +439,6 @@ class BotApi:
             return response.text
 
     def get_self_info(self, use_cache=False) -> t.Union[str, structs.User, None]:
-        """
-        获取Bot自身信息
-        """
         if use_cache and "self_info" in self._cache:
             get_response = self._cache["self_info"]
         else:
@@ -244,14 +459,6 @@ class BotApi:
 
     def get_self_guilds(self, before="", after="", limit="100", use_cache=False, retstr=False) \
             -> t.Union[str, t.List[structs.Guild], None]:
-        """
-        获取Bot自身加入频道信息
-        :param before: 读此id之前的数据(before/after 只能二选一)
-        :param after: 读此id之后的数据(before/after 只能二选一)
-        :param limit: 每次拉取条数
-        :param use_cache: 使用缓存
-        :param retstr: 强制返回纯文本
-        """
         if use_cache and "get_self_guilds" in self._cache:
             get_response = self._cache["get_self_guilds"]
         else:

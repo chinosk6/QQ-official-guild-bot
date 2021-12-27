@@ -194,6 +194,18 @@ class Ark:
             }
             return ret
 
+def schedule_json(name, description, start_timestamp, end_timestamp, jump_channel_id, remind_type):
+    ret = {
+            "schedule": {
+                "name": name,
+                "description": description,
+                "start_timestamp": start_timestamp,
+                "end_timestamp": end_timestamp,
+                "jump_channel_id": jump_channel_id,
+                "remind_type": remind_type
+            }
+        }
+    return ret
 
 # a = Ark.Embed("标题", ["内容1", "内容2"], "http", "xxtc").ark_to_json()
 # a = Ark.LinkWithText("描述", "提示", [["文本1"], ["文本2", "uurrll"]]).ark_to_json()

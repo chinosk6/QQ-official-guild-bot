@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 import typing as t
 
+
 class Codes:
     class QBot:
         class OPCode:  # see: https://bot.q.qq.com/wiki/develop/api/gateway/opcode.html
@@ -17,6 +18,7 @@ class Codes:
             READY = "READY"
             RESUMED = "RESUMED"
             AT_MESSAGE_CREATE = "AT_MESSAGE_CREATE"  # 收到艾特消息
+            DIRECT_MESSAGE_CREATE = "DIRECT_MESSAGE_CREATE"  # 收到私聊消息
             GUILD_CREATE = "GUILD_CREATE"  # bot加入频道
             GUILD_UPDATE = "GUILD_UPDATE"  # 频道信息更新
             GUILD_DELETE = "GUILD_DELETE"  # 频道解散/bot被移除
@@ -30,13 +32,21 @@ class Codes:
             AUDIO_FINISH = "AUDIO_FINISH"  # 音频结束
             AUDIO_ON_MIC = "AUDIO_ON_MIC"  # 机器人上麦
             AUDIO_OFF_MIC = "AUDIO_OFF_MIC"  # 机器人下麦
+            MESSAGE_REACTION_ADD = "MESSAGE_REACTION_ADD"  # 添加表情表态
+            MESSAGE_REACTION_REMOVE = "MESSAGE_REACTION_REMOVE"  # 删除表情表态
+            THREAD_CREATE = "THREAD_CREATE"  # 当用户创建主题时
+            THREAD_UPDATE = "THREAD_UPDATE"  # 当用户更新主题时
+            THREAD_DELETE = "THREAD_DELETE"  # 当用户删除主题时
+            POST_CREATE = "POST_CREATE"  # 当用户创建帖子时
+            POST_DELETE = "POST_DELETE"  # 当用户删除帖子时
+            REPLY_CREATE = "REPLY_CREATE"  # 当用户回复评论时
+            REPLY_DELETE = "REPLY_DELETE"  # 当用户回复评论时
 
         class UserRole:
             member = "1"  # 全体成员
             admin = "2"  # 管理员
             sub_admin = "5"  # zi子频道管理员
             owner = "4"  # 创建者
-
 
     class SeverCode(QBot.GatewayEventName):
         BotGroupAtMessage = "BotGroupAtMessage"
@@ -52,6 +62,7 @@ class User(BaseModel):  # 用户对象
     union_openid: t.Optional[str]
     union_user_account: t.Optional[str]
 
+
 class Member(BaseModel):
     user: t.Optional[User]
     nick: t.Optional[str]
@@ -60,6 +71,7 @@ class Member(BaseModel):
     deaf: t.Optional[bool]
     mute: t.Optional[bool]
     pending: t.Optional[bool]
+
 
 class MessageAttachment(BaseModel):
     url: str
@@ -75,6 +87,7 @@ class MessageEmbedField(BaseModel):
     name: str
     value: str
 
+
 class MessageEmbed(BaseModel):
     title: str
     description: str
@@ -82,17 +95,21 @@ class MessageEmbed(BaseModel):
     timestamp: t.Optional[str]
     fields: t.List[MessageEmbedField]
 
+
 class MessageArkObjKv(BaseModel):
     key: str
     value: str
 
+
 class MessageArkObj(BaseModel):
     obj_kv: t.List[MessageArkObjKv]
+
 
 class MessageArkKv(BaseModel):
     key: str
     value: str
     obj: t.List[MessageArkObj]
+
 
 class MessageArk(BaseModel):
     template_id: int
@@ -120,11 +137,12 @@ class Guild(BaseModel):  # 频道对象
     name: str
     icon: t.Optional[str]
     owner_id: str
-    owner: bool
+    owner: t.Optional[bool]
     member_count: int
     max_members: int
     description: str
     joined_at: t.Optional[str]
+
 
 class Channel(BaseModel):  # 子频道对象
     id: str
@@ -139,6 +157,7 @@ class Channel(BaseModel):  # 子频道对象
     nsfw: t.Optional[bool]  # 这个字段, 可能为True吗?
     rate_limit_per_user: t.Optional[int]
 
+
 class MemberWithGuildID(BaseModel):
     guild_id: str
     user: t.Optional[User]
@@ -146,13 +165,41 @@ class MemberWithGuildID(BaseModel):
     roles: t.Optional[t.List[str]]
     joined_at: str
 
+
 class AudioControl(BaseModel):
     audio_url: str
     text: str
     status: int
+
 
 class AudioAction(BaseModel):
     guild_id: str
     channel_id: str
     audio_url: t.Optional[str]
     text: t.Optional[str]
+
+class ReactionTarget(BaseModel):
+    id: str
+    type: int
+
+class Emoji(BaseModel):
+    id: str
+    type: int
+
+class MessageReaction(BaseModel):
+    user_id: str
+    guild_id: str
+    channel_id: str
+    target: ReactionTarget
+    emoji: Emoji
+
+
+class Schedule(BaseModel):
+    id: str
+    name: str
+    description: str
+    start_timestamp: str
+    end_timestamp: str
+    creator: Member
+    jump_channel_id: str
+    remind_type: str

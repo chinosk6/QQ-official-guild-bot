@@ -28,6 +28,9 @@ class BotMessageDistributor(api.BotApi):
         self.event_audio_on_mic: List[Callable] = []  # 机器人上麦
         self.event_audio_off_mic: List[Callable] = []  # 机器人下麦
 
+        self.event_message_reaction_add: List[Callable] = []  # 添加表情表态
+        self.event_message_reaction_remove: List[Callable] = []  # 移除表情表态
+
         self.img_to_url = None  # 图片转为url
 
         self.modules = {}  # 模块注册
@@ -81,6 +84,12 @@ class BotMessageDistributor(api.BotApi):
 
             elif reg_type == BCd.SeverCode.AUDIO_OFF_MIC:
                 _appender(self.event_audio_off_mic, "机器人下麦")
+
+            elif reg_type == BCd.SeverCode.MESSAGE_REACTION_ADD:
+                _appender(self.event_message_reaction_add, "添加表情表态")
+
+            elif reg_type == BCd.SeverCode.MESSAGE_REACTION_REMOVE:
+                _appender(self.event_message_reaction_remove, "移除表情表态")
 
             elif reg_type == BCd.SeverCode.image_to_url:
                 if self.img_to_url is not None:

@@ -39,7 +39,7 @@ def get_at_message(chain: bot_api.structs.Message):  # 注册一个艾特消息�
         bot.api_send_reply_message(chain.channel_id, chain.id, embed=send_embed)
 
     elif "/ark" in chain.content:  # 发送ark消息, 需要Ark权限
-        send_ark = Ark.LinkWithText("描述", "提示信息", [["纯文本1"], ["纯文本2"], ["链接文本1", "http:baidu.com"]])
+        send_ark = Ark.LinkWithText("描述", "提示信息", [["纯文本1"], ["纯文本2"], ["链接文本1", "http://baidu.com"]])
         bot.api_send_reply_message(chain.channel_id, chain.id, ark=send_ark)
 
 
@@ -99,16 +99,98 @@ bot.api_send_reply_message(channel_id, message_id, embed=send_embed)
 - `Ark`类中目前有`LinkWithText`, `TextAndThumbnail`, `BigImage`三个子类, 分别对应 [23 链接+文本列表模板](https://bot.q.qq.com/wiki/develop/api/openapi/message/template/template_23.html), [24 文本+缩略图模板](https://bot.q.qq.com/wiki/develop/api/openapi/message/template/template_24.html), [37 大图模板](https://bot.q.qq.com/wiki/develop/api/openapi/message/template/template_37.html), 下面以构造相对复杂的 [23 链接+文本列表模板 ](https://bot.q.qq.com/wiki/develop/api/openapi/message/template/template_23.html)为例
 
 ```python
-send_ark = Ark.LinkWithText("描述", "提示信息", [["纯文本1"], ["纯文本2"], ["链接文本1", "http://baidu.com"], ["链接文本2", "http//:google.com"]])
+send_ark = Ark.LinkWithText("描述", "提示信息", [["纯文本1"], ["纯文本2"], ["链接文本1", "http://baidu.com"], ["链接文本2", "http://google.com"]])
 
 bot.api_send_reply_message(channel_id, message_id, ark=send_ark)
 ```
 
 
 
+## 目前支持的事件/API
+
+#### 事件
+
+- `事件代号`: 注册函数时, 输入对应事件代号, 在触发相应事件时, 所有被注册函数将被调用。
+
+  - 位于: 类`bot_api.structs.Codes.SeverCode`, 继承自`GatewayEventName`
+
+- `传入参数`指被注册函数的参数
+  - 位于: 类`bot_api.structs`
+
+| 事件代号                | 传入参数          | 事件描述           |
+| ----------------------- | ----------------- | ------------------ |
+| AT_MESSAGE_CREATE       | Message           | 收到艾特消息       |
+| DIRECT_MESSAGE_CREATE   | 暂不支持          | 收到私聊消息       |
+| GUILD_CREATE            | Guild             | bot加入频道        |
+| GUILD_UPDATE            | Guild             | 频道信息更新       |
+| GUILD_DELETE            | Guild             | 频道解散/bot被移除 |
+| CHANNEL_CREATE          | Channel           | 子频道被创建       |
+| CHANNEL_UPDATE          | Channel           | 子频道信息变更     |
+| CHANNEL_DELETE          | Channel           | 子频道被删除       |
+| GUILD_MEMBER_ADD        | MemberWithGuildID | 新用户加入频道     |
+| GUILD_MEMBER_UPDATE     | -                 | TX: 暂无           |
+| GUILD_MEMBER_REMOVE     | MemberWithGuildID | 用户离开频道       |
+| AUDIO_START             | AudioAction       | 音频开始播放       |
+| AUDIO_FINISH            | AudioAction       | 音频结束           |
+| AUDIO_ON_MIC            | AudioAction       | 机器人上麦         |
+| AUDIO_OFF_MIC           | AudioAction       | 机器人下麦         |
+| MESSAGE_REACTION_ADD    | MessageReaction   | 添加表情表态       |
+| MESSAGE_REACTION_REMOVE | MessageReaction   | 删除表情表态       |
+| THREAD_CREATE           | 暂不支持          | 用户创建主题       |
+| THREAD_UPDATE           | 暂不支持          | 用户更新主题       |
+| THREAD_DELETE           | 暂不支持          | 用户删除主题       |
+| POST_CREATE             | 暂不支持          | 用户创建帖子       |
+| POST_DELETE             | 暂不支持          | 用户删除帖子       |
+| REPLY_CREATE            | 暂不支持          | 用户回复评论       |
+| REPLY_DELETE            | 暂不支持          | 用户回复评论       |
+
+
+
+- 例: 注册一个`添加表情表态`处理函数
+
+```python
+@bot.receiver(bot_api.structs.Codes.SeverCode.MESSAGE_REACTION_ADD)  # 填入事件代号
+def get_at_message(event: bot_api.structs.MessageReaction):  # 函数参数类型为上表对应的传入参数
+    pass
+```
+
+
+
+
+------
+
+#### API
+
+- 初始化Bot实例后, 输入`bot.api_`, 即可根据代码补全进行使用
+
+```python
+api_send_reply_message()  # 发送消息
+api_mute_guiid  # 全频道禁言
+api_mute_member  # 指定用户禁言
+api_get_self_guilds  # 获取Bot加入的频道列表
+api_get_self_info()  # 获取Bot自身信息
+api_get_message()  # 获取指定消息
+api_get_guild_channel_list()  # 获取频道内子频道列表
+api_get_channel_info()  # 获取子频道信息
+api_get_guild_user_info()  # 获取频道用户信息
+api_get_guild_info()  # 获取频道信息
+api_get_schedule_list()  # 获取子频道日程列表
+api_get_schedule()  # 获取单个日程信息
+api_schedule_create()  # 创建日程
+api_schedule_change()  # 修改日程
+api_schedule_delete()  # 删除日程
+api_message_recall()  # 撤回消息
+```
+
+------
+
+
+
 
 
 # 作为HTTP API使用
+
+- 一个人同时更新两套SDK显然是非常困难的。因此HTTP API部分的更新进度会慢于SDK本体。欢迎有能之士前来Pr~
 
 - 参考`main.py`
 
