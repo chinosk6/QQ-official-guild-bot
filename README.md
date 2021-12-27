@@ -132,8 +132,8 @@ bot.api_send_reply_message(channel_id, message_id, ark=send_ark)
 | GUILD_MEMBER_REMOVE     | MemberWithGuildID | 用户离开频道       |
 | AUDIO_START             | AudioAction       | 音频开始播放       |
 | AUDIO_FINISH            | AudioAction       | 音频结束           |
-| AUDIO_ON_MIC            | AudioAction       | 机器人上麦         |
-| AUDIO_OFF_MIC           | AudioAction       | 机器人下麦         |
+| AUDIO_ON_MIC            | AudioAction       | 上麦               |
+| AUDIO_OFF_MIC           | AudioAction       | 下麦               |
 | MESSAGE_REACTION_ADD    | MessageReaction   | 添加表情表态       |
 | MESSAGE_REACTION_REMOVE | MessageReaction   | 删除表情表态       |
 | THREAD_CREATE           | 暂不支持          | 用户创建主题       |
@@ -184,9 +184,11 @@ api_message_recall()  # 撤回消息
 
 ------
 
+<br>
 
+<br>
 
-
+<br>
 
 # 作为HTTP API使用
 
