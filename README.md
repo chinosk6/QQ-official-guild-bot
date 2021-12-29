@@ -183,7 +183,7 @@ api_message_recall()  # 撤回消息
 api_pv_get_member_list()  # 仅私域机器人可用 - 取频道成员列表
 api_pv_kick_member()  # 仅私域机器人可用 - 踢出指定成员
 api_pv_create_channel()  # 仅私域机器人可用 - 创建子频道
-api_pv_change_channel()  # 仅私域机器人可用 - 创建子频道
+api_pv_change_channel()  # 仅私域机器人可用 - 修改子频道信息
 api_pv_delete_channel()  # 仅私域机器人可用 - 删除子频道
 ```
 
