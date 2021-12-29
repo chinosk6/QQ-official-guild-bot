@@ -208,6 +208,7 @@ class BotApp(inter.BotMessageDistributor):
             self.self_id = botid
             self.self_name = botname
             self.logger(f"开始运行:\nBotID: {botid}\nBotName: {botname}\nbot: {isbot}")
+            self._event_handout(self.bot_call_after_load, self)
         else:
             self.logger("开始尝试连接")
 

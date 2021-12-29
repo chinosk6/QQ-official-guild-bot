@@ -10,6 +10,9 @@ class BotMessageDistributor(api.BotApi):
         super().__init__(appid=appid, token=token, secret=secret, debug=debug, sandbox=sandbox,
                          api_return_pydantic=api_return_pydantic)
 
+        # self.bot_call_before_load: List[Callable] = []  # 加载Bot前执行函数
+        self.bot_call_after_load: List[Callable] = []  # 加载Bot完成后执行函数
+
         self.bot_at_message_group: List[Callable] = []  # 消息处理函数
         self.bot_get_message_pv: List[Callable] = []  # 收到消息(私域)
         self.event_guild_create: List[Callable] = []  # bot加入频道事件
@@ -47,7 +50,10 @@ class BotMessageDistributor(api.BotApi):
             if reg_type == BCd.SeverCode.BotGroupAtMessage:  # 群艾特处理函数
                 _appender(self.bot_at_message_group, "群艾特消息")
 
-            if reg_type == BCd.SeverCode.MESSAGE_CREATE:  # 群艾特处理函数
+            if reg_type == BCd.SeverCode.AT_MESSAGE_CREATE:  # 群艾特处理函数
+                _appender(self.bot_at_message_group, "群艾特消息")
+
+            if reg_type == BCd.SeverCode.MESSAGE_CREATE:
                 _appender(self.bot_get_message_pv, "收到消息(私域)")
 
             elif reg_type == BCd.SeverCode.GUILD_CREATE:  # bot加入频道
@@ -94,6 +100,9 @@ class BotMessageDistributor(api.BotApi):
 
             elif reg_type == BCd.SeverCode.MESSAGE_REACTION_REMOVE:
                 _appender(self.event_message_reaction_remove, "移除表情表态")
+
+            elif reg_type == BCd.SeverCode.FUNC_CALL_AFTER_BOT_LOAD:
+                _appender(self.bot_call_after_load, "Bot载入完成后加载函数")
 
             elif reg_type == BCd.SeverCode.image_to_url:
                 if self.img_to_url is not None:

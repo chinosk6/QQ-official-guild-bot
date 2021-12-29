@@ -53,6 +53,8 @@ class Codes:
         BotGroupAtMessage = "BotGroupAtMessage"
         Module = "Module"
         image_to_url = "image_to_url"
+        # FUNC_CALL_BEFORE_BOT_LOAD = "FUNC_CALL_BEFORE_BOT_LOAD"
+        FUNC_CALL_AFTER_BOT_LOAD = "FUNC_CALL_AFTER_BOT_LOAD"
 
 
 class User(BaseModel):  # 用户对象

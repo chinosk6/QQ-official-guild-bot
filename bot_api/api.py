@@ -4,7 +4,9 @@ from . import structs
 import typing as t
 import time
 from . import models
+from colorama import init
 
+init(autoreset=True)
 
 class ColorfulPrint:
     class Style:
@@ -433,7 +435,6 @@ class BotApi:
             return structs.Channel(**data)
         else:
             return response.text
-
     def api_pv_change_channel(self, channel_id, channel_name: str, channel_type: int,
                               channel_position: int, channel_parent_id: int, retstr=False)\
             -> t.Union[str, structs.Channel, None]:

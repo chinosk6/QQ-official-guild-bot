@@ -109,6 +109,8 @@ bot.api_send_reply_message(channel_id, message_id, ark=send_ark)
 
 #### 事件
 
+- 下表中所有事件触发时都会在新线程中执行
+
 - `事件代号`: 注册函数时, 输入对应事件代号, 在触发相应事件时, 所有被注册函数将被调用。
 
   - 位于: 类`bot_api.structs.Codes.SeverCode`, 继承自`GatewayEventName`
@@ -116,33 +118,34 @@ bot.api_send_reply_message(channel_id, message_id, ark=send_ark)
 - `传入参数`指被注册函数的参数
   - 位于: 类`bot_api.structs`
 
-| 事件代号                | 传入参数          | 事件描述                   |
-| ----------------------- | ----------------- | -------------------------- |
-| AT_MESSAGE_CREATE       | Message           | 收到艾特消息               |
-| MESSAGE_CREATE          | Message           | 收到消息(仅私域机器人可用) |
-| DIRECT_MESSAGE_CREATE   | 暂不支持          | 收到私聊消息               |
-| GUILD_CREATE            | Guild             | bot加入频道                |
-| GUILD_UPDATE            | Guild             | 频道信息更新               |
-| GUILD_DELETE            | Guild             | 频道解散/bot被移除         |
-| CHANNEL_CREATE          | Channel           | 子频道被创建               |
-| CHANNEL_UPDATE          | Channel           | 子频道信息变更             |
-| CHANNEL_DELETE          | Channel           | 子频道被删除               |
-| GUILD_MEMBER_ADD        | MemberWithGuildID | 新用户加入频道             |
-| GUILD_MEMBER_UPDATE     | -                 | TX: 暂无                   |
-| GUILD_MEMBER_REMOVE     | MemberWithGuildID | 用户离开频道               |
-| AUDIO_START             | AudioAction       | 音频开始播放               |
-| AUDIO_FINISH            | AudioAction       | 音频结束                   |
-| AUDIO_ON_MIC            | AudioAction       | 上麦                       |
-| AUDIO_OFF_MIC           | AudioAction       | 下麦                       |
-| MESSAGE_REACTION_ADD    | MessageReaction   | 添加表情表态               |
-| MESSAGE_REACTION_REMOVE | MessageReaction   | 删除表情表态               |
-| THREAD_CREATE           | 暂不支持          | 用户创建主题               |
-| THREAD_UPDATE           | 暂不支持          | 用户更新主题               |
-| THREAD_DELETE           | 暂不支持          | 用户删除主题               |
-| POST_CREATE             | 暂不支持          | 用户创建帖子               |
-| POST_DELETE             | 暂不支持          | 用户删除帖子               |
-| REPLY_CREATE            | 暂不支持          | 用户回复评论               |
-| REPLY_DELETE            | 暂不支持          | 用户回复评论               |
+| 事件代号                 | 传入参数                 | 事件描述                              |
+| ------------------------ | ------------------------ | ------------------------------------- |
+| FUNC_CALL_AFTER_BOT_LOAD | 初始化后的BotAPP类(self) | 当Bot初始化完成后, 会立刻执行这些函数 |
+| AT_MESSAGE_CREATE        | Message                  | 收到艾特消息                          |
+| MESSAGE_CREATE           | Message                  | 收到消息(仅私域机器人可用)            |
+| DIRECT_MESSAGE_CREATE    | 暂不支持                 | 收到私聊消息                          |
+| GUILD_CREATE             | Guild                    | bot加入频道                           |
+| GUILD_UPDATE             | Guild                    | 频道信息更新                          |
+| GUILD_DELETE             | Guild                    | 频道解散/bot被移除                    |
+| CHANNEL_CREATE           | Channel                  | 子频道被创建                          |
+| CHANNEL_UPDATE           | Channel                  | 子频道信息变更                        |
+| CHANNEL_DELETE           | Channel                  | 子频道被删除                          |
+| GUILD_MEMBER_ADD         | MemberWithGuildID        | 新用户加入频道                        |
+| GUILD_MEMBER_UPDATE      | -                        | TX: 暂无                              |
+| GUILD_MEMBER_REMOVE      | MemberWithGuildID        | 用户离开频道                          |
+| AUDIO_START              | AudioAction              | 音频开始播放                          |
+| AUDIO_FINISH             | AudioAction              | 音频结束                              |
+| AUDIO_ON_MIC             | AudioAction              | 上麦                                  |
+| AUDIO_OFF_MIC            | AudioAction              | 下麦                                  |
+| MESSAGE_REACTION_ADD     | MessageReaction          | 添加表情表态                          |
+| MESSAGE_REACTION_REMOVE  | MessageReaction          | 删除表情表态                          |
+| THREAD_CREATE            | 暂不支持                 | 用户创建主题                          |
+| THREAD_UPDATE            | 暂不支持                 | 用户更新主题                          |
+| THREAD_DELETE            | 暂不支持                 | 用户删除主题                          |
+| POST_CREATE              | 暂不支持                 | 用户创建帖子                          |
+| POST_DELETE              | 暂不支持                 | 用户删除帖子                          |
+| REPLY_CREATE             | 暂不支持                 | 用户回复评论                          |
+| REPLY_DELETE             | 暂不支持                 | 用户回复评论                          |
 
 
 
