@@ -365,6 +365,122 @@ class BotApi:
         else:
             return ""
 
+    def api_pv_get_member_list(self, guild_id, retstr=False) -> t.Union[str, t.List[structs.Member], None]:  # TODO 未测试
+        """
+        仅私域机器人可用 - 取频道成员列表
+        :param guild_id: 频道ID
+        :param retstr: 强制返回字符串
+        :return: 成功返回成员列表, 失败返回错误信息
+        """
+        url = f"{self.base_api}/guilds/{guild_id}/members"
+        response = requests.request("GET", url)
+        data = json.loads(response.text)
+
+        if "code" in data:
+            self.logger(f"获取频道成员列表失败: {response.text}", error=True)
+            if retstr:
+                return response.text
+            return None
+        elif self.api_return_pydantic and not retstr:
+            return [structs.Member(**_d) for _d in data]
+        else:
+            return response.text
+
+    def api_pv_kick_member(self, guild_id, user_id) -> str:
+        """
+        仅私域机器人可用 - 踢出指定成员
+        :param guild_id: 频道ID
+        :param user_id: 成员ID
+        :return: 成功返回空字符串, 失败返回错误信息
+        """
+        url = f"{self.base_api}/guilds/{guild_id}/members/{user_id}"
+        response = requests.request("DELETE", url)
+
+        if response.status_code != 204:
+            self.logger(f"移除成员失败: {response.text}", error=True)
+            return response.text
+        else:
+            return ""
+
+    def api_pv_create_channel(self, guild_id, channel_name: str, channel_type: int,
+                              channel_position: int, channel_parent_id: int, retstr=False)\
+            -> t.Union[str, structs.Channel, None]:
+        """
+        仅私域机器人可用 - 创建子频道
+        :param guild_id: 频道ID
+        :param channel_name: 子频道名称
+        :param channel_type: 子频道类型
+        :param channel_position: 子频道排序
+        :param channel_parent_id: 子频道分组ID
+        :param retstr: 强制返回纯文本
+        :return: 成功返回子频道信息, 失败返回错误信息
+        """
+        url = f"{self.base_api}/guilds/{guild_id}/channels"
+        body_s = {
+            "name": channel_name,
+            "type": channel_type,
+            "position": channel_position,
+            "parent_id": channel_parent_id
+        }
+        response = requests.request("POST", url, data=json.dumps(body_s))
+        data = json.loads(response.text)
+        if "code" in data:
+            self.logger(f"创建子频道失败: {response.text}", error=True)
+            if retstr:
+                return response.text
+            return None
+        elif self.api_return_pydantic and not retstr:
+            return structs.Channel(**data)
+        else:
+            return response.text
+
+    def api_pv_change_channel(self, channel_id, channel_name: str, channel_type: int,
+                              channel_position: int, channel_parent_id: int, retstr=False)\
+            -> t.Union[str, structs.Channel, None]:
+        """
+        仅私域机器人可用 - 创建子频道
+        :param channel_id: 子频道ID
+        :param channel_name: 子频道名称
+        :param channel_type: 子频道类型
+        :param channel_position: 子频道排序
+        :param channel_parent_id: 子频道分组ID
+        :param retstr: 强制返回纯文本
+        :return: 成功返回修改后的子频道信息, 失败返回错误信息
+        """
+        url = f"{self.base_api}/channels/{channel_id}"
+        body_s = {
+            "name": channel_name,
+            "type": channel_type,
+            "position": channel_position,
+            "parent_id": channel_parent_id
+        }
+        response = requests.request("PATCH", url, data=json.dumps(body_s))
+        data = json.loads(response.text)
+        if "code" in data:
+            self.logger(f"修改子频道失败: {response.text}", error=True)
+            if retstr:
+                return response.text
+            return None
+        elif self.api_return_pydantic and not retstr:
+            return structs.Channel(**data)
+        else:
+            return response.text
+
+    def api_pv_delete_channel(self, channel_id):
+        """
+        仅私域机器人可用 - 删除子频道
+        :param channel_id: 子频道ID
+        :return: 成功返回空字符串, 失败返回错误信息
+        """
+        url = f"{self.base_api}/channels/{channel_id}"
+        response = requests.request("DELETE", url)
+        if response.status_code != 200 and response.status_code != 204:  # ?
+            self.logger(f"删除子频道失败: {response.text}")
+            return response.text
+        else:
+            return ""
+
+
     def get_guild_info(self, guiid_id, retstr=False) -> t.Union[str, structs.Guild, None]:
         url = f"{self.base_api}/guilds/{guiid_id}"
         response = requests.request("GET", url, headers=self.__headers)

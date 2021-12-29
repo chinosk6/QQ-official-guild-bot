@@ -11,6 +11,7 @@ class BotMessageDistributor(api.BotApi):
                          api_return_pydantic=api_return_pydantic)
 
         self.bot_at_message_group: List[Callable] = []  # 消息处理函数
+        self.bot_get_message_pv: List[Callable] = []  # 收到消息(私域)
         self.event_guild_create: List[Callable] = []  # bot加入频道事件
         self.event_guild_update: List[Callable] = []  # 频道信息更新事件
         self.event_guild_delete: List[Callable] = []  # 频道删除事件
@@ -45,6 +46,9 @@ class BotMessageDistributor(api.BotApi):
 
             if reg_type == BCd.SeverCode.BotGroupAtMessage:  # 群艾特处理函数
                 _appender(self.bot_at_message_group, "群艾特消息")
+
+            if reg_type == BCd.SeverCode.MESSAGE_CREATE:  # 群艾特处理函数
+                _appender(self.bot_get_message_pv, "收到消息(私域)")
 
             elif reg_type == BCd.SeverCode.GUILD_CREATE:  # bot加入频道
                 _appender(self.event_guild_create, "Bot加入频道消息")

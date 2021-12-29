@@ -17,6 +17,7 @@ class Intents:  # https://bot.q.qq.com/wiki/develop/api/gateway/intents.html
     AT_MESSAGES = 1 << 30
     GUILD_MESSAGE_REACTIONS = 1 << 10
     FORUM_EVENT = 1 << 28
+    MESSAGE_CREATE = 1 << 9
 
 def on_new_thread(f):
     def task_qwq(*args, **kwargs):
@@ -45,6 +46,7 @@ class BotApp(inter.BotMessageDistributor):
         self.ignore_at_self = ignore_at_self
         self.self_id = ""
         self.self_name = ""
+        self.EVENT_MESSAGE_CREATE_CALL_AT_MESSAGE_CREATE = False
         self.session_id = None
         self._d = None  # 心跳参数
         self._t = None
@@ -133,6 +135,14 @@ class BotApp(inter.BotMessageDistributor):
                         if self.ignore_at_self:
                             data["d"]["content"] = data["d"]["content"].replace(f"<@!{self.self_id}>", "").strip()
                         self._event_handout(self.bot_at_message_group, structs.Message(**data["d"]))
+
+                    elif s_type == BCd.QBot.GatewayEventName.MESSAGE_CREATE:  # 收到消息(私域)
+                        if self.ignore_at_self:
+                            data["d"]["content"] = data["d"]["content"].replace(f"<@!{self.self_id}>", "").strip()
+
+                        if self.EVENT_MESSAGE_CREATE_CALL_AT_MESSAGE_CREATE:
+                            self._event_handout(self.bot_at_message_group, structs.Message(**data["d"]))
+                        self._event_handout(self.bot_get_message_pv, structs.Message(**data["d"]))
 
                     elif s_type == BCd.QBot.GatewayEventName.GUILD_CREATE:  # bot加入频道
                         self._event_handout(self.event_guild_create, structs.Guild(**data["d"]))

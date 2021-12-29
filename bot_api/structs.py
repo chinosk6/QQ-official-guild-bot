@@ -18,6 +18,7 @@ class Codes:
             READY = "READY"
             RESUMED = "RESUMED"
             AT_MESSAGE_CREATE = "AT_MESSAGE_CREATE"  # 收到艾特消息
+            MESSAGE_CREATE = "MESSAGE_CREATE"  # 收到消息, 仅私域机器人有效
             DIRECT_MESSAGE_CREATE = "DIRECT_MESSAGE_CREATE"  # 收到私聊消息
             GUILD_CREATE = "GUILD_CREATE"  # bot加入频道
             GUILD_UPDATE = "GUILD_UPDATE"  # 频道信息更新
@@ -45,7 +46,7 @@ class Codes:
         class UserRole:
             member = "1"  # 全体成员
             admin = "2"  # 管理员
-            sub_admin = "5"  # zi子频道管理员
+            sub_admin = "5"  # 子频道管理员
             owner = "4"  # 创建者
 
     class SeverCode(QBot.GatewayEventName):
