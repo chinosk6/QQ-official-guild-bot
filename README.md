@@ -117,32 +117,33 @@ bot.api_send_reply_message(channel_id, message_id, ark=send_ark)
 - `传入参数`指被注册函数的参数
   - 位于: 类`bot_api.structs`
 
-| 事件代号                | 传入参数          | 事件描述           |
-| ----------------------- | ----------------- | ------------------ |
-| AT_MESSAGE_CREATE       | Message           | 收到艾特消息       |
-| DIRECT_MESSAGE_CREATE   | 暂不支持          | 收到私聊消息       |
-| GUILD_CREATE            | Guild             | bot加入频道        |
-| GUILD_UPDATE            | Guild             | 频道信息更新       |
-| GUILD_DELETE            | Guild             | 频道解散/bot被移除 |
-| CHANNEL_CREATE          | Channel           | 子频道被创建       |
-| CHANNEL_UPDATE          | Channel           | 子频道信息变更     |
-| CHANNEL_DELETE          | Channel           | 子频道被删除       |
-| GUILD_MEMBER_ADD        | MemberWithGuildID | 新用户加入频道     |
-| GUILD_MEMBER_UPDATE     | -                 | TX: 暂无           |
-| GUILD_MEMBER_REMOVE     | MemberWithGuildID | 用户离开频道       |
-| AUDIO_START             | AudioAction       | 音频开始播放       |
-| AUDIO_FINISH            | AudioAction       | 音频结束           |
-| AUDIO_ON_MIC            | AudioAction       | 上麦               |
-| AUDIO_OFF_MIC           | AudioAction       | 下麦               |
-| MESSAGE_REACTION_ADD    | MessageReaction   | 添加表情表态       |
-| MESSAGE_REACTION_REMOVE | MessageReaction   | 删除表情表态       |
-| THREAD_CREATE           | 暂不支持          | 用户创建主题       |
-| THREAD_UPDATE           | 暂不支持          | 用户更新主题       |
-| THREAD_DELETE           | 暂不支持          | 用户删除主题       |
-| POST_CREATE             | 暂不支持          | 用户创建帖子       |
-| POST_DELETE             | 暂不支持          | 用户删除帖子       |
-| REPLY_CREATE            | 暂不支持          | 用户回复评论       |
-| REPLY_DELETE            | 暂不支持          | 用户回复评论       |
+| 事件代号                | 传入参数          | 事件描述                   |
+| ----------------------- | ----------------- | -------------------------- |
+| AT_MESSAGE_CREATE       | Message           | 收到艾特消息               |
+| MESSAGE_CREATE          | Message           | 收到消息(仅私域机器人可用) |
+| DIRECT_MESSAGE_CREATE   | 暂不支持          | 收到私聊消息               |
+| GUILD_CREATE            | Guild             | bot加入频道                |
+| GUILD_UPDATE            | Guild             | 频道信息更新               |
+| GUILD_DELETE            | Guild             | 频道解散/bot被移除         |
+| CHANNEL_CREATE          | Channel           | 子频道被创建               |
+| CHANNEL_UPDATE          | Channel           | 子频道信息变更             |
+| CHANNEL_DELETE          | Channel           | 子频道被删除               |
+| GUILD_MEMBER_ADD        | MemberWithGuildID | 新用户加入频道             |
+| GUILD_MEMBER_UPDATE     | -                 | TX: 暂无                   |
+| GUILD_MEMBER_REMOVE     | MemberWithGuildID | 用户离开频道               |
+| AUDIO_START             | AudioAction       | 音频开始播放               |
+| AUDIO_FINISH            | AudioAction       | 音频结束                   |
+| AUDIO_ON_MIC            | AudioAction       | 上麦                       |
+| AUDIO_OFF_MIC           | AudioAction       | 下麦                       |
+| MESSAGE_REACTION_ADD    | MessageReaction   | 添加表情表态               |
+| MESSAGE_REACTION_REMOVE | MessageReaction   | 删除表情表态               |
+| THREAD_CREATE           | 暂不支持          | 用户创建主题               |
+| THREAD_UPDATE           | 暂不支持          | 用户更新主题               |
+| THREAD_DELETE           | 暂不支持          | 用户删除主题               |
+| POST_CREATE             | 暂不支持          | 用户创建帖子               |
+| POST_DELETE             | 暂不支持          | 用户删除帖子               |
+| REPLY_CREATE            | 暂不支持          | 用户回复评论               |
+| REPLY_DELETE            | 暂不支持          | 用户回复评论               |
 
 
 
@@ -165,9 +166,9 @@ def get_at_message(event: bot_api.structs.MessageReaction):  # 函数参数类�
 
 ```python
 api_send_reply_message()  # 发送消息
-api_mute_guiid  # 全频道禁言
-api_mute_member  # 指定用户禁言
-api_get_self_guilds  # 获取Bot加入的频道列表
+api_mute_guiid()  # 全频道禁言
+api_mute_member()  # 指定用户禁言
+api_get_self_guilds()  # 获取Bot加入的频道列表
 api_get_self_info()  # 获取Bot自身信息
 api_get_message()  # 获取指定消息
 api_get_guild_channel_list()  # 获取频道内子频道列表
@@ -180,6 +181,11 @@ api_schedule_create()  # 创建日程
 api_schedule_change()  # 修改日程
 api_schedule_delete()  # 删除日程
 api_message_recall()  # 撤回消息
+api_pv_get_member_list()  # 仅私域机器人可用 - 取频道成员列表
+api_pv_kick_member()  # 仅私域机器人可用 - 踢出指定成员
+api_pv_create_channel()  # 仅私域机器人可用 - 创建子频道
+api_pv_change_channel()  # 仅私域机器人可用 - 创建子频道
+api_pv_delete_channel()  # 仅私域机器人可用 - 删除子频道
 ```
 
 ------
