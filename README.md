@@ -1,7 +1,6 @@
 # QQ官方频道机器人SDK
 
-- 只实现了部分API
-- 添加[onebot11](https://11.onebot.dev/)支持(api差距过大, 很难做到完全兼容)
+- 开发中~
 
 
 

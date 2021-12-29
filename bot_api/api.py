@@ -438,7 +438,7 @@ class BotApi:
                               channel_position: int, channel_parent_id: int, retstr=False)\
             -> t.Union[str, structs.Channel, None]:
         """
-        仅私域机器人可用 - 创建子频道
+        仅私域机器人可用 - 修改子频道信息
         :param channel_id: 子频道ID
         :param channel_name: 子频道名称
         :param channel_type: 子频道类型
