@@ -7,6 +7,7 @@ import requests
 import time
 from threading import Thread
 import typing as t
+import os
 
 
 class Intents:  # https://bot.q.qq.com/wiki/develop/api/gateway/intents.html
@@ -28,7 +29,7 @@ def on_new_thread(f):
 
 class BotApp(inter.BotMessageDistributor):
     def __init__(self, appid: int, token: str, secret: str, is_sandbox: bool, inters: t.List,
-                 debug=False, api_return_pydantic=False, ignore_at_self=False):
+                 debug=False, api_return_pydantic=False, ignore_at_self=False, output_log=True):
         """
         BotAPP
         :param appid: BotAPPId
@@ -39,9 +40,10 @@ class BotApp(inter.BotMessageDistributor):
         :param debug: 输出debug日志
         :param api_return_pydantic: 调用api后返回pydantic对象, 默认为纯文本
         :param ignore_at_self: 过滤消息中艾特bot的内容
+        :param output_log: 是否输出日志到本地
         """
         super().__init__(appid=appid, token=token, secret=secret, sandbox=is_sandbox, debug=debug,
-                         api_return_pydantic=api_return_pydantic)
+                         api_return_pydantic=api_return_pydantic, output_log=output_log)
         self.inters = inters
         self.ignore_at_self = ignore_at_self
         self.self_id = ""
@@ -52,6 +54,7 @@ class BotApp(inter.BotMessageDistributor):
         self._t = None
         self.heartbeat_time = -1  # 心跳间隔
         self.ws = None
+        self._spath = os.path.split(__file__)[0]
 
     # @on_new_thread
     def start(self):
@@ -203,11 +206,16 @@ class BotApp(inter.BotMessageDistributor):
                 _t = Thread(target=f, args=args)
                 _t.start()
 
+    def _check_files(self):
+        if not os.path.exists(f"{self._spath}/log"):
+            os.mkdir(f"{self._spath}/log")
+
     def _on_open(self, botid="", botname="", isbot="", is_login=False):
         if is_login:
             self.self_id = botid
             self.self_name = botname
             self.logger(f"开始运行:\nBotID: {botid}\nBotName: {botname}\nbot: {isbot}")
+            self._check_files()
             self._event_handout(self.bot_call_after_load, self)
         else:
             self.logger("开始尝试连接")

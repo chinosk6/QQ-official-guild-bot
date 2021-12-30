@@ -2,65 +2,14 @@ import requests
 import json
 from . import structs
 import typing as t
-import time
 from . import models
-from colorama import init
-
-init(autoreset=True)
-
-class ColorfulPrint:
-    class Style:
-        DEFAULT = 0
-        BOLD = 1
-        ITALIC = 3
-        UNDERLINE = 4
-        ANTIWHITE = 7
-
-    class Color:
-        DEFAULT = 39
-        BLACK = 30
-        RED = 31
-        GREEN = 32
-        YELLOW = 33
-        BLUE = 34
-        PURPLE = 35
-        CYAN = 36
-        WHITE = 37
-        LIGHTBLACK_EX = 90
-        LIGHTRED_EX = 91
-        LIGHTGREEN_EX = 92
-        LIGHTYELLOW_EX = 93
-        LIGHTBLUE_EX = 94
-        LIGHTMAGENTA_EX = 95
-        LIGHTCYAN_EX = 96
-        LIGHTWHITE_EX = 97
-
-    class BGColor:
-        DEFAULT = 49
-        BLACK = 40
-        RED = 41
-        GREEN = 42
-        YELLOW = 43
-        BLUE = 44
-        PURPLE = 45
-        CYAN = 46
-        WHITE = 47
-        LIGHTBLACK_EX = 100
-        LIGHTRED_EX = 101
-        LIGHTGREEN_EX = 102
-        LIGHTYELLOW_EX = 103
-        LIGHTBLUE_EX = 104
-        LIGHTMAGENTA_EX = 105
-        LIGHTCYAN_EX = 106
-        LIGHTWHITE_EX = 107
-
-    @staticmethod
-    def printout(content, color=Color.DEFAULT, bgcolor=BGColor.DEFAULT, style=Style.DEFAULT):
-        print("\033[{};{};{}m{}\033[0m".format(style, color, bgcolor, content))
+from .logger import BotLogger
 
 
-class BotApi:
-    def __init__(self, appid: int, token: str, secret: str, debug: bool, sandbox: bool, api_return_pydantic=False):
+class BotApi(BotLogger):
+    def __init__(self, appid: int, token: str, secret: str, debug: bool, sandbox: bool, api_return_pydantic=False,
+                 output_log=True):
+        super().__init__(debug=debug, write_out_log=output_log)
         self.appid = appid
         self.token = token
         self.secret = secret
@@ -75,7 +24,24 @@ class BotApi:
 
         self._cache = {}
 
-    def api_send_reply_message(self, channel_id: str, msg_id="", content="", image_url="", retstr=False,
+    def api_send_message(self, channel_id, msg_id="", content="", image_url="", retstr=False,
+                         embed=None, ark=None, others_parameter: t.Optional[t.Dict] = None) \
+            -> t.Union[str, structs.Message, None]:
+        """
+        发送消息
+        :param channel_id: 子频道ID
+        :param msg_id: 消息ID, 可空
+        :param content: 消息内容, 可空
+        :param image_url: 图片url, 可空
+        :param retstr: 调用此API后返回纯文本
+        :param embed: embed消息, 可空
+        :param ark: ark消息, 可空
+        :param others_parameter: 其它自定义字段
+        """
+        return self.api_send_reply_message(channel_id=channel_id, msg_id=msg_id, content=content, image_url=image_url,
+                                           retstr=retstr, embed=embed, ark=ark, others_parameter=others_parameter)
+
+    def api_send_reply_message(self, channel_id, msg_id="", content="", image_url="", retstr=False,
                                embed=None, ark=None, others_parameter: t.Optional[t.Dict] = None) \
             -> t.Union[str, structs.Message, None]:
         """
@@ -302,8 +268,8 @@ class BotApi:
             return response.text
 
     def api_schedule_change(self, channel_id, schedule_id, name: str, description: str, start_timestamp: str,
-                            end_timestamp: str, jump_channel_id: str, remind_type: str, retstr=False)\
-            -> t.Union[str, structs.Schedule,  None]:
+                            end_timestamp: str, jump_channel_id: str, remind_type: str, retstr=False) \
+            -> t.Union[str, structs.Schedule, None]:
         """
         修改日程
         :param channel_id: 子频道ID
@@ -405,7 +371,7 @@ class BotApi:
             return ""
 
     def api_pv_create_channel(self, guild_id, channel_name: str, channel_type: int,
-                              channel_position: int, channel_parent_id: int, retstr=False)\
+                              channel_position: int, channel_parent_id: int, retstr=False) \
             -> t.Union[str, structs.Channel, None]:
         """
         仅私域机器人可用 - 创建子频道
@@ -435,8 +401,9 @@ class BotApi:
             return structs.Channel(**data)
         else:
             return response.text
+
     def api_pv_change_channel(self, channel_id, channel_name: str, channel_type: int,
-                              channel_position: int, channel_parent_id: int, retstr=False)\
+                              channel_position: int, channel_parent_id: int, retstr=False) \
             -> t.Union[str, structs.Channel, None]:
         """
         仅私域机器人可用 - 修改子频道信息
@@ -480,7 +447,6 @@ class BotApi:
             return response.text
         else:
             return ""
-
 
     def get_guild_info(self, guiid_id, retstr=False) -> t.Union[str, structs.Guild, None]:
         url = f"{self.base_api}/guilds/{guiid_id}"
@@ -602,13 +568,3 @@ class BotApi:
 
     # TODO 更多API
 
-    def logger(self, msg, debug=False, warning=False, error=False):
-        _tm = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-        if error:
-            ColorfulPrint.printout(f"[{_tm}][ERROR] {msg}", ColorfulPrint.Color.RED)
-        elif warning:
-            ColorfulPrint.printout(f"[{_tm}][WARNING] {msg}", ColorfulPrint.Color.LIGHTYELLOW_EX)
-        elif debug and self.debug:
-            ColorfulPrint.printout(f"[{_tm}][DEBUG] {msg}", ColorfulPrint.Color.BLUE)
-        elif not debug:
-            ColorfulPrint.printout(f"[{_tm}][INFO] {msg}")
