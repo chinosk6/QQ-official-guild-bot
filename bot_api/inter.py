@@ -1,8 +1,8 @@
-from .structs import Codes as BCd
-from typing import Callable, List
+from . import structs
+from typing import Callable, List, Dict
 from . import api
 
-
+BCd = structs.Codes
 
 class BotMessageDistributor(api.BotApi):
     def __init__(self, appid: int, token: str, secret: str, sandbox: bool, debug=False, api_return_pydantic=False,
@@ -11,30 +11,28 @@ class BotMessageDistributor(api.BotApi):
         super().__init__(appid=appid, token=token, secret=secret, debug=debug, sandbox=sandbox,
                          api_return_pydantic=api_return_pydantic, output_log=output_log, log_path=log_path)
 
-        # self.bot_call_before_load: List[Callable] = []  # 加载Bot前执行函数
-        self.bot_call_after_load: List[Callable] = []  # 加载Bot完成后执行函数
+        self.known_events = {BCd.SeverCode.BotGroupAtMessage: ["群艾特消息", structs.Message],
+                             BCd.SeverCode.AT_MESSAGE_CREATE: ["群艾特消息", structs.Message],
+                             BCd.SeverCode.MESSAGE_CREATE: ["收到消息(私域)", structs.Message],
+                             BCd.SeverCode.GUILD_CREATE: ["Bot加入频道消息", structs.Guild],
+                             BCd.SeverCode.GUILD_UPDATE: ["频道更新", structs.Guild],
+                             BCd.SeverCode.GUILD_DELETE: ["频道更新", structs.Guild],
+                             BCd.SeverCode.CHANNEL_CREATE: ["子频道创建", structs.Channel],
+                             BCd.SeverCode.CHANNEL_UPDATE: ["子频道更新", structs.Channel],
+                             BCd.SeverCode.CHANNEL_DELETE: ["子频道删除", structs.Channel],
+                             BCd.SeverCode.GUILD_MEMBER_ADD: ["用户加入频道", structs.MemberWithGuildID],
+                             BCd.SeverCode.GUILD_MEMBER_UPDATE: ["用户信息更新", structs.MemberWithGuildID],
+                             BCd.SeverCode.GUILD_MEMBER_REMOVE: ["用户离开频道", structs.MemberWithGuildID],
+                             BCd.SeverCode.AUDIO_START: ["音频开始播放", structs.AudioAction],
+                             BCd.SeverCode.AUDIO_FINISH: ["音频结束", structs.AudioAction],
+                             BCd.SeverCode.AUDIO_ON_MIC: ["上麦", structs.AudioAction],
+                             BCd.SeverCode.AUDIO_OFF_MIC: ["下麦", structs.AudioAction],
+                             BCd.SeverCode.MESSAGE_REACTION_ADD: ["添加表情表态", structs.MessageReaction],
+                             BCd.SeverCode.MESSAGE_REACTION_REMOVE: ["移除表情表态", structs.MessageReaction],
+                             BCd.SeverCode.FUNC_CALL_AFTER_BOT_LOAD: ["Bot载入完成后加载函数", None]
+                             }
 
-        self.bot_at_message_group: List[Callable] = []  # 消息处理函数
-        self.bot_get_message_pv: List[Callable] = []  # 收到消息(私域)
-        self.event_guild_create: List[Callable] = []  # bot加入频道事件
-        self.event_guild_update: List[Callable] = []  # 频道信息更新事件
-        self.event_guild_delete: List[Callable] = []  # 频道删除事件
-
-        self.event_channel_create: List[Callable] = []  # 子频道创建事件
-        self.event_channel_update: List[Callable] = []  # 子频道信息更新事件
-        self.event_channel_delete: List[Callable] = []  # 子频道删除事件
-
-        self.event_guild_member_add: List[Callable] = []  # 用户加入频道
-        self.event_guild_member_update: List[Callable] = []  # TX: 暂无
-        self.event_guild_member_remove: List[Callable] = []  # 用户离开频道
-
-        self.event_audio_start: List[Callable] = []  # 音频开始
-        self.event_audio_finish: List[Callable] = []  # 音频结束
-        self.event_audio_on_mic: List[Callable] = []  # 机器人上麦
-        self.event_audio_off_mic: List[Callable] = []  # 机器人下麦
-
-        self.event_message_reaction_add: List[Callable] = []  # 添加表情表态
-        self.event_message_reaction_remove: List[Callable] = []  # 移除表情表态
+        self.bot_events: Dict[str, List] = {}
 
         self.img_to_url = None  # 图片转为url
 
@@ -44,66 +42,14 @@ class BotMessageDistributor(api.BotApi):
         self.logger(f"注册函数: {reg_type} {reg_name}", debug=True)
 
         def reg(func: Callable):
-            def _appender(fl: List[Callable], event_name: str):
-                fl.append(func)
+            def _adder(event_type, event_name):
+                if event_type not in self.bot_events:
+                    self.bot_events[event_type] = []
+                self.bot_events[event_type].append(func)
                 self.logger(f"函数: {func.__name__} 注册到事件: {event_name}", debug=True)
 
-            if reg_type == BCd.SeverCode.BotGroupAtMessage:  # 群艾特处理函数
-                _appender(self.bot_at_message_group, "群艾特消息")
-
-            if reg_type == BCd.SeverCode.AT_MESSAGE_CREATE:  # 群艾特处理函数
-                _appender(self.bot_at_message_group, "群艾特消息")
-
-            if reg_type == BCd.SeverCode.MESSAGE_CREATE:
-                _appender(self.bot_get_message_pv, "收到消息(私域)")
-
-            elif reg_type == BCd.SeverCode.GUILD_CREATE:  # bot加入频道
-                _appender(self.event_guild_create, "Bot加入频道消息")
-
-            elif reg_type == BCd.SeverCode.GUILD_UPDATE:  # 频道信息更新
-                _appender(self.event_guild_update, "频道更新")
-
-            elif reg_type == BCd.SeverCode.GUILD_DELETE:
-                _appender(self.event_guild_delete, "退出频道/频道解散")
-
-            elif reg_type == BCd.SeverCode.CHANNEL_CREATE:  # 子频道创建
-                _appender(self.event_channel_create, "子频道创建")
-
-            elif reg_type == BCd.SeverCode.CHANNEL_UPDATE:  # 子频道信息更新
-                _appender(self.event_channel_update, "子频道更新")
-
-            elif reg_type == BCd.SeverCode.CHANNEL_DELETE:
-                _appender(self.event_channel_delete, "子频道删除")
-
-            elif reg_type == BCd.SeverCode.GUILD_MEMBER_ADD:
-                _appender(self.event_guild_member_add, "用户加入频道")
-
-            elif reg_type == BCd.SeverCode.GUILD_MEMBER_UPDATE:
-                _appender(self.event_guild_member_update, "用户信息更新")
-
-            elif reg_type == BCd.SeverCode.GUILD_MEMBER_REMOVE:
-                _appender(self.event_guild_member_remove, "用户离开频道")
-
-            elif reg_type == BCd.SeverCode.AUDIO_START:
-                _appender(self.event_audio_start, "音频开始播放")
-
-            elif reg_type == BCd.SeverCode.AUDIO_FINISH:
-                _appender(self.event_audio_finish, "音频结束")
-
-            elif reg_type == BCd.SeverCode.AUDIO_ON_MIC:
-                _appender(self.event_audio_on_mic, "机器人上麦")
-
-            elif reg_type == BCd.SeverCode.AUDIO_OFF_MIC:
-                _appender(self.event_audio_off_mic, "机器人下麦")
-
-            elif reg_type == BCd.SeverCode.MESSAGE_REACTION_ADD:
-                _appender(self.event_message_reaction_add, "添加表情表态")
-
-            elif reg_type == BCd.SeverCode.MESSAGE_REACTION_REMOVE:
-                _appender(self.event_message_reaction_remove, "移除表情表态")
-
-            elif reg_type == BCd.SeverCode.FUNC_CALL_AFTER_BOT_LOAD:
-                _appender(self.bot_call_after_load, "Bot载入完成后加载函数")
+            if reg_type in self.known_events:
+                _adder(reg_type, self.known_events[reg_type][0])
 
             elif reg_type == BCd.SeverCode.image_to_url:
                 if self.img_to_url is not None:

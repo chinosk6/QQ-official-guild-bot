@@ -1,5 +1,4 @@
 from . import inter
-from . import structs
 from .structs import Codes as BCd
 import websocket
 import json
@@ -9,6 +8,7 @@ from threading import Thread
 import typing as t
 import os
 
+event_types = BCd.QBot.GatewayEventName
 
 class Intents:  # https://bot.q.qq.com/wiki/develop/api/gateway/intents.html
     GUILDS = 1 << 0
@@ -59,9 +59,6 @@ class BotApp(inter.BotMessageDistributor):
 
     # @on_new_thread
     def start(self):
-        if not self.bot_at_message_group:
-            self.logger("未注册艾特消息处理器", warning=True)
-
         websocket.enableTrace(False)
         self.ws = self._get_connection()
         self.ws.run_forever()
@@ -125,63 +122,40 @@ class BotApp(inter.BotMessageDistributor):
                 self._d = data["s"]
                 if "t" in data:
                     s_type = data["t"]
-                    if s_type == BCd.QBot.GatewayEventName.READY:  # 验证完成
+
+                    def _send_event(m_dantic, changed_data=None, changed_s_type=None):
+                        """
+                        事件聚合分发
+                        :param m_dantic: 要发送的消息(Basemodel)
+                        :param changed_data: 需要修改的消息, 默认为data["d"]
+                        :param changed_s_type: 需要修改的消息类型, 默认为s_type, 即data["t"]
+                        :return:
+                        """
+                        _send_data = data["d"] if changed_data is None else changed_data
+                        _send_type = s_type if changed_s_type is None else changed_s_type
+                        self._event_handout(_send_type, m_dantic(**_send_data))
+
+                    if s_type == event_types.READY:  # 验证完成
                         self.session_id = data["d"]["session_id"]
                         self._on_open(data["d"]["user"]["id"], data["d"]["user"]["username"], data["d"]["user"]["bot"],
                                       is_login=True)
                         self.send_heart_beat(self.ws)
 
-
-                    elif s_type == BCd.QBot.GatewayEventName.RESUMED:  # 服务器通知重连
+                    elif s_type == event_types.RESUMED:  # 服务器通知重连
                         self.logger("重连完成, 事件已全部补发")
 
-                    elif s_type == BCd.QBot.GatewayEventName.AT_MESSAGE_CREATE:  # 用户艾特Bot
-                        if self.ignore_at_self:
-                            data["d"]["content"] = data["d"]["content"].replace(f"<@!{self.self_id}>", "").strip()
-                        self._event_handout(self.bot_at_message_group, structs.Message(**data["d"]))
-
-                    elif s_type == BCd.QBot.GatewayEventName.MESSAGE_CREATE:  # 收到消息(私域)
-                        if self.ignore_at_self:
-                            data["d"]["content"] = data["d"]["content"].replace(f"<@!{self.self_id}>", "").strip()
-
-                        if self.EVENT_MESSAGE_CREATE_CALL_AT_MESSAGE_CREATE:
-                            self._event_handout(self.bot_at_message_group, structs.Message(**data["d"]))
-                        self._event_handout(self.bot_get_message_pv, structs.Message(**data["d"]))
-
-                    elif s_type == BCd.QBot.GatewayEventName.GUILD_CREATE:  # bot加入频道
-                        self._event_handout(self.event_guild_create, structs.Guild(**data["d"]))
-                    elif s_type == BCd.QBot.GatewayEventName.GUILD_UPDATE:
-                        self._event_handout(self.event_guild_update, structs.Guild(**data["d"]))
-                    elif s_type == BCd.QBot.GatewayEventName.GUILD_DELETE:
-                        self._event_handout(self.event_guild_delete, structs.Guild(**data["d"]))
-
-                    elif s_type == BCd.QBot.GatewayEventName.CHANNEL_CREATE:  # 子频道三事件
-                        self._event_handout(self.event_channel_create, structs.Channel(**data["d"]))
-                    elif s_type == BCd.QBot.GatewayEventName.CHANNEL_UPDATE:
-                        self._event_handout(self.event_channel_update, structs.Channel(**data["d"]))
-                    elif s_type == BCd.QBot.GatewayEventName.CHANNEL_DELETE:
-                        self._event_handout(self.event_channel_delete, structs.Channel(**data["d"]))
-
-                    elif s_type == BCd.QBot.GatewayEventName.GUILD_MEMBER_ADD:  # 用户三事件
-                        self._event_handout(self.event_guild_member_add, structs.MemberWithGuildID(**data["d"]))
-                    elif s_type == BCd.QBot.GatewayEventName.GUILD_MEMBER_UPDATE:  # TX: 暂无
-                        self._event_handout(self.event_guild_member_update, structs.MemberWithGuildID(**data["d"]))
-                    elif s_type == BCd.QBot.GatewayEventName.GUILD_MEMBER_REMOVE:
-                        self._event_handout(self.event_guild_member_remove, structs.MemberWithGuildID(**data["d"]))
-
-                    elif s_type == BCd.QBot.GatewayEventName.AUDIO_START:  # 音频四事件
-                        self._event_handout(self.event_audio_start, structs.AudioAction(**data["d"]))
-                    elif s_type == BCd.QBot.GatewayEventName.AUDIO_FINISH:
-                        self._event_handout(self.event_audio_finish, structs.AudioAction(**data["d"]))
-                    elif s_type == BCd.QBot.GatewayEventName.AUDIO_ON_MIC:
-                        self._event_handout(self.event_audio_on_mic, structs.AudioAction(**data["d"]))
-                    elif s_type == BCd.QBot.GatewayEventName.AUDIO_OFF_MIC:
-                        self._event_handout(self.event_audio_off_mic, structs.AudioAction(**data["d"]))
-
-                    elif s_type == BCd.QBot.GatewayEventName.MESSAGE_REACTION_ADD:  # 表情表态事件
-                        self._event_handout(self.event_message_reaction_add, structs.MessageReaction(**data["d"]))
-                    elif s_type == BCd.QBot.GatewayEventName.MESSAGE_REACTION_REMOVE:
-                        self._event_handout(self.event_message_reaction_remove, structs.MessageReaction(**data["d"]))
+                    elif s_type in self.known_events:
+                        s_dantic = self.known_events[s_type][1]
+                        if s_dantic is not None:
+                            if s_type in [event_types.AT_MESSAGE_CREATE, event_types.MESSAGE_CREATE]:
+                                if self.ignore_at_self:
+                                    data["d"]["content"] = data["d"]["content"].replace(f"<@!{self.self_id}>",
+                                                                                        "").strip()
+                                if s_type == event_types.MESSAGE_CREATE:  # 收到消息(私域)
+                                    if self.EVENT_MESSAGE_CREATE_CALL_AT_MESSAGE_CREATE:  # 普通消息依旧调用艾特消息函数
+                                        _send_event(self.known_events[event_types.AT_MESSAGE_CREATE][1],
+                                                    changed_s_type=event_types.AT_MESSAGE_CREATE)
+                            _send_event(s_dantic)
 
                     # TODO 主题相关事件
 
@@ -200,12 +174,14 @@ class BotApp(inter.BotMessageDistributor):
         except Exception as sb:
             self.logger(sb, error=True)
 
-    @staticmethod
-    def _event_handout(throw_func: t.List[t.Callable], *args):
-        if throw_func:
-            for f in throw_func:
-                _t = Thread(target=f, args=args)
-                _t.start()
+
+    def _event_handout(self, func_type: str, *args, **kwargs):
+        if func_type in self.bot_events:
+            throw_func = self.bot_events[func_type]
+            if throw_func:
+                for f in throw_func:
+                    _t = Thread(target=f, args=args, kwargs=kwargs)
+                    _t.start()
 
     def _check_files(self):
         pass
@@ -216,7 +192,7 @@ class BotApp(inter.BotMessageDistributor):
             self.self_name = botname
             self.logger(f"开始运行:\nBotID: {botid}\nBotName: {botname}\nbot: {isbot}")
             self._check_files()
-            self._event_handout(self.bot_call_after_load, self)
+            self._event_handout(BCd.SeverCode.FUNC_CALL_AFTER_BOT_LOAD, self)
         else:
             self.logger("开始尝试连接")
 

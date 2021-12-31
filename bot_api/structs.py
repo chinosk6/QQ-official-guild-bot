@@ -50,7 +50,7 @@ class Codes:
             owner = "4"  # 创建者
 
     class SeverCode(QBot.GatewayEventName):
-        BotGroupAtMessage = "BotGroupAtMessage"
+        BotGroupAtMessage = "AT_MESSAGE_CREATE"
         Module = "Module"
         image_to_url = "image_to_url"
         # FUNC_CALL_BEFORE_BOT_LOAD = "FUNC_CALL_BEFORE_BOT_LOAD"
