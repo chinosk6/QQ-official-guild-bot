@@ -54,10 +54,11 @@ class BGColor:
 
 
 class BotLogger:
-    def __init__(self, debug: bool, write_out_log=True):
+    def __init__(self, debug: bool, write_out_log=True, log_path=""):
         self.debug = debug
         self.write_out_log = write_out_log
-        self._spath = os.path.split(__file__)[0]
+        self._log_path = f"{os.path.split(__file__)[0]}/log" if log_path == "" else log_path
+        self.logger(f"log路径为: {self._log_path}")
 
     def logger(self, msg, debug=False, warning=False, error=False):
         _tm = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
@@ -71,15 +72,15 @@ class BotLogger:
             self._printout(f"[{_tm}][INFO] {msg}")
 
     def _printout(self, content, color=Color.DEFAULT, bgcolor=BGColor.DEFAULT, style=Style.DEFAULT):
+        print("\033[{};{};{}m{}\033[0m".format(style, color, bgcolor, content))
         if self.write_out_log:
             self._write_log(content)
-        print("\033[{};{};{}m{}\033[0m".format(style, color, bgcolor, content))
 
     def _write_log(self, content):
         _tm = time.strftime("%Y-%m-%d", time.localtime())
         try:
-            with open(f"{self._spath}/log/{_tm}.log", "a", encoding="utf8") as f:
+            with open(f"{self._log_path}/{_tm}.log", "a", encoding="utf8") as f:
                 f.write(f"{content}\n")
         except FileNotFoundError:
-            os.mkdir(f"{self._spath}/log")
+            os.makedirs(f"{self._log_path}")
             self.logger("未找到log文件夹, 尝试重新创建", warning=True)

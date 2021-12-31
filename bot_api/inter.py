@@ -6,10 +6,10 @@ from . import api
 
 class BotMessageDistributor(api.BotApi):
     def __init__(self, appid: int, token: str, secret: str, sandbox: bool, debug=False, api_return_pydantic=False,
-                 output_log=True):
+                 output_log=True, log_path=""):
         self.debug = debug
         super().__init__(appid=appid, token=token, secret=secret, debug=debug, sandbox=sandbox,
-                         api_return_pydantic=api_return_pydantic, output_log=output_log)
+                         api_return_pydantic=api_return_pydantic, output_log=output_log, log_path=log_path)
 
         # self.bot_call_before_load: List[Callable] = []  # 加载Bot前执行函数
         self.bot_call_after_load: List[Callable] = []  # 加载Bot完成后执行函数

@@ -8,8 +8,8 @@ from .logger import BotLogger
 
 class BotApi(BotLogger):
     def __init__(self, appid: int, token: str, secret: str, debug: bool, sandbox: bool, api_return_pydantic=False,
-                 output_log=True):
-        super().__init__(debug=debug, write_out_log=output_log)
+                 output_log=True, log_path=""):
+        super().__init__(debug=debug, write_out_log=output_log, log_path=log_path)
         self.appid = appid
         self.token = token
         self.secret = secret

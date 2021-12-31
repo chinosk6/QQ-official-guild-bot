@@ -29,7 +29,7 @@ def on_new_thread(f):
 
 class BotApp(inter.BotMessageDistributor):
     def __init__(self, appid: int, token: str, secret: str, is_sandbox: bool, inters: t.List,
-                 debug=False, api_return_pydantic=False, ignore_at_self=False, output_log=True):
+                 debug=False, api_return_pydantic=False, ignore_at_self=False, output_log=True, log_path=""):
         """
         BotAPP
         :param appid: BotAPPId
@@ -41,9 +41,10 @@ class BotApp(inter.BotMessageDistributor):
         :param api_return_pydantic: 调用api后返回pydantic对象, 默认为纯文本
         :param ignore_at_self: 过滤消息中艾特bot的内容
         :param output_log: 是否输出日志到本地
+        :param log_path: 日志输出位置, 默认为sdk目录内log文件夹
         """
         super().__init__(appid=appid, token=token, secret=secret, sandbox=is_sandbox, debug=debug,
-                         api_return_pydantic=api_return_pydantic, output_log=output_log)
+                         api_return_pydantic=api_return_pydantic, output_log=output_log, log_path=log_path)
         self.inters = inters
         self.ignore_at_self = ignore_at_self
         self.self_id = ""
@@ -207,8 +208,7 @@ class BotApp(inter.BotMessageDistributor):
                 _t.start()
 
     def _check_files(self):
-        if not os.path.exists(f"{self._spath}/log"):
-            os.mkdir(f"{self._spath}/log")
+        pass
 
     def _on_open(self, botid="", botname="", isbot="", is_login=False):
         if is_login:
