@@ -81,5 +81,5 @@ class BotLogger:
             with open(f"{self._spath}/log/{_tm}.log", "a", encoding="utf8") as f:
                 f.write(f"{content}\n")
         except FileNotFoundError:
-            self.logger("log文件夹被移除, 尝试重新创建", warning=True)
             os.mkdir(f"{self._spath}/log")
+            self.logger("未找到log文件夹, 尝试重新创建", warning=True)
