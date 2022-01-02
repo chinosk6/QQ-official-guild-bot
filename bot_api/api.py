@@ -89,7 +89,7 @@ class BotApi(BotLogger):
         else:
             return response.text
 
-    def api_mute_guiid(self, guild_id, mute_seconds="", mute_end_timestamp=""):
+    def api_mute_guild(self, guild_id, mute_seconds="", mute_end_timestamp=""):
         """
         全频道禁言, 秒数/时间戳二选一
         :param guild_id: 频道ID
@@ -154,13 +154,13 @@ class BotApi(BotLogger):
         """
         return self.get_message(channel_id=channel_id, message_id=message_id, retstr=retstr)
 
-    def api_get_guild_channel_list(self, guiid_id, retstr=False) -> t.Union[str, t.List[structs.Channel], None]:
+    def api_get_guild_channel_list(self, guild_id, retstr=False) -> t.Union[str, t.List[structs.Channel], None]:
         """
         获取频道内子频道列表
-        :param guiid_id: 频道id
+        :param guild_id: 频道id
         :param retstr: 强制返回纯文本
         """
-        return self.get_guild_channel_list(guiid_id=guiid_id, retstr=retstr)
+        return self.get_guild_channel_list(guild_id=guild_id, retstr=retstr)
 
     def api_get_channel_info(self, channel_id, retstr=False) -> t.Union[str, structs.Channel, None]:
         """
@@ -170,22 +170,22 @@ class BotApi(BotLogger):
         """
         return self.get_channel_info(channel_id=channel_id, retstr=retstr)
 
-    def api_get_guild_user_info(self, guiid_id, member_id, retstr=False) -> t.Union[str, structs.Member, None]:
+    def api_get_guild_user_info(self, guild_id, member_id, retstr=False) -> t.Union[str, structs.Member, None]:
         """
         获取频道用户信息
-        :param guiid_id: 频道id
+        :param guild_id: 频道id
         :param member_id: 用户id
         :param retstr: 强制返回纯文本
         """
-        return self.get_guild_user_info(guiid_id=guiid_id, member_id=member_id, retstr=retstr)
+        return self.get_guild_user_info(guild_id=guild_id, member_id=member_id, retstr=retstr)
 
-    def api_get_guild_info(self, guiid_id, retstr=False) -> t.Union[str, structs.Guild, None]:
+    def api_get_guild_info(self, guild_id, retstr=False) -> t.Union[str, structs.Guild, None]:
         """
         获取频道信息
-        :param guiid_id: 频道id
+        :param guild_id: 频道id
         :param retstr: 强制返回纯文本
         """
-        return self.get_guild_info(guiid_id=guiid_id, retstr=retstr)
+        return self.get_guild_info(guild_id=guild_id, retstr=retstr)
 
     def api_get_schedule_list(self, channel_id, retstr=False) -> t.Union[str, t.List[structs.Schedule], None]:
         """
@@ -341,7 +341,7 @@ class BotApi(BotLogger):
         :return: 成功返回成员列表, 失败返回错误信息
         """
         url = f"{self.base_api}/guilds/{guild_id}/members"
-        response = requests.request("GET", url)
+        response = requests.request("GET", url, headers=self.__headers)
         data = json.loads(response.text)
 
         if "code" in data:
@@ -362,7 +362,7 @@ class BotApi(BotLogger):
         :return: 成功返回空字符串, 失败返回错误信息
         """
         url = f"{self.base_api}/guilds/{guild_id}/members/{user_id}"
-        response = requests.request("DELETE", url)
+        response = requests.request("DELETE", url, headers=self.__headers)
 
         if response.status_code != 204:
             self.logger(f"移除成员失败: {response.text}", error=True)
@@ -390,7 +390,7 @@ class BotApi(BotLogger):
             "position": channel_position,
             "parent_id": channel_parent_id
         }
-        response = requests.request("POST", url, data=json.dumps(body_s))
+        response = requests.request("POST", url, data=json.dumps(body_s), headers=self.__headers)
         data = json.loads(response.text)
         if "code" in data:
             self.logger(f"创建子频道失败: {response.text}", error=True)
@@ -422,7 +422,7 @@ class BotApi(BotLogger):
             "position": channel_position,
             "parent_id": channel_parent_id
         }
-        response = requests.request("PATCH", url, data=json.dumps(body_s))
+        response = requests.request("PATCH", url, data=json.dumps(body_s), headers=self.__headers)
         data = json.loads(response.text)
         if "code" in data:
             self.logger(f"修改子频道失败: {response.text}", error=True)
@@ -441,15 +441,15 @@ class BotApi(BotLogger):
         :return: 成功返回空字符串, 失败返回错误信息
         """
         url = f"{self.base_api}/channels/{channel_id}"
-        response = requests.request("DELETE", url)
+        response = requests.request("DELETE", url, headers=self.__headers)
         if response.status_code != 200 and response.status_code != 204:  # ?
             self.logger(f"删除子频道失败: {response.text}")
             return response.text
         else:
             return ""
 
-    def get_guild_info(self, guiid_id, retstr=False) -> t.Union[str, structs.Guild, None]:
-        url = f"{self.base_api}/guilds/{guiid_id}"
+    def get_guild_info(self, guild_id, retstr=False) -> t.Union[str, structs.Guild, None]:
+        url = f"{self.base_api}/guilds/{guild_id}"
         response = requests.request("GET", url, headers=self.__headers)
         data = json.loads(response.text)
         if "code" in data:
@@ -462,8 +462,8 @@ class BotApi(BotLogger):
         else:
             return response.text
 
-    def get_guild_user_info(self, guiid_id, member_id, retstr=False) -> t.Union[str, structs.Member, None]:
-        url = f"{self.base_api}/guilds/{guiid_id}/members/{member_id}"
+    def get_guild_user_info(self, guild_id, member_id, retstr=False) -> t.Union[str, structs.Member, None]:
+        url = f"{self.base_api}/guilds/{guild_id}/members/{member_id}"
         response = requests.request("GET", url, headers=self.__headers)
         data = json.loads(response.text)
         if "code" in data:
@@ -493,8 +493,8 @@ class BotApi(BotLogger):
         else:
             return response.text
 
-    def get_guild_channel_list(self, guiid_id, retstr=False) -> t.Union[str, t.List[structs.Channel], None]:
-        url = f"{self.base_api}/guilds/{guiid_id}/channels"
+    def get_guild_channel_list(self, guild_id, retstr=False) -> t.Union[str, t.List[structs.Channel], None]:
+        url = f"{self.base_api}/guilds/{guild_id}/channels"
         response = requests.request("GET", url, headers=self.__headers)
         data = json.loads(response.text)
         if "code" in data:
