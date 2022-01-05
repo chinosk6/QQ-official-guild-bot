@@ -97,13 +97,15 @@ class BotApi(BotLogger):
         :param mute_end_timestamp: 禁言截止时间戳
         :return: 若成功, 返回空字符串; 失败则返回错误信息
         """
-        url = f"{self.base_api}/guilds/{guild_id}/mute?"
-        _up = f"mute_end_timestamp={mute_end_timestamp}" if mute_end_timestamp != "" else f"mute_seconds={mute_seconds}"
-        url = f"{url}{_up}"
-        response = requests.request("PATCH", url, headers=self.__headers)
+        url = f"{self.base_api}/guilds/{guild_id}/mute"
+        _body = {"mute_end_timestamp": f"{mute_end_timestamp}"} if mute_end_timestamp != "" else\
+            {"mute_seconds": f"{mute_seconds}"}
+
+        response = requests.request("PATCH", url, data=json.dumps(_body), headers=self.__headers)
         if response.status_code != 204:
             data = response.text
-            self.logger(f"禁言成员失败: {data}")
+            self.logger(f"禁言成员失败: {data}", error=True)
+            return data
         else:
             return ""
 
@@ -116,13 +118,13 @@ class BotApi(BotLogger):
         :param mute_end_timestamp: 禁言截止时间戳
         :return: 若成功, 返回空字符串; 失败则返回错误信息
         """
-        url = f"{self.base_api}/guilds/{guild_id}/members/{member_id}/mute?"
-        _up = f"mute_end_timestamp={mute_end_timestamp}" if mute_end_timestamp != "" else f"mute_seconds={mute_seconds}"
-        url = f"{url}{_up}"
-        response = requests.request("PATCH", url, headers=self.__headers)
+        url = f"{self.base_api}/guilds/{guild_id}/members/{member_id}/mute"
+        _body = {"mute_end_timestamp": f"{mute_end_timestamp}"} if mute_end_timestamp != "" else\
+            {"mute_seconds": f"{mute_seconds}"}
+        response = requests.request("PATCH", url, data=json.dumps(_body), headers=self.__headers)
         if response.status_code != 204:
             data = response.text
-            self.logger(f"禁言成员失败: {data}")
+            self.logger(f"禁言成员失败: {data}", error=True)
             return data
         else:
             return ""
