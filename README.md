@@ -199,6 +199,7 @@ api_permissions_get_channel()  # 获取指定子频道的权限
 api_permissions_change_channel()  # 修改指定子频道的权限
 api_permissions_get_channel_group()  # 获取指定子频道身份组的权限
 api_permissions_change_channel_group()  # 修改指定子频道身份组的权限
+api_audio_control()  # 音频控制
 
 api_pv_get_member_list()  # 仅私域机器人可用 - 取频道成员列表
 api_pv_kick_member()  # 仅私域机器人可用 - 踢出指定成员
