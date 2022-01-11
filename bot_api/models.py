@@ -222,3 +222,11 @@ def role_body(name="", color=-1, hoist=1):
     if color == -1:
         body["info"].pop("color")
     return body
+
+def audio_control(audio_url: str, status: int, text=""):
+    ret = {"audio_url": audio_url,
+           "text": text,
+           "status": status}
+    if status != 0 or text == "":
+        ret.pop("text")
+    return ret

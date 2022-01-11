@@ -176,6 +176,11 @@ class AudioControl(BaseModel):
     text: str
     status: int
 
+class AudioControlSTATUS:
+    START = 0
+    PAUSE = 1
+    RESUME = 2
+    STOP = 3
 
 class AudioAction(BaseModel):
     guild_id: str

@@ -363,6 +363,21 @@ class BotApi(BotLogger):
         """
         return self.api_permissions_change_channel(channel_id, role_id, add, remove, setrole=1)
 
+    def api_audio_control(self, channel_id, audio_url: str, status: int, text=""):
+        """
+        音频控制
+        :param channel_id: 子频道ID
+        :param audio_url: 音频url
+        :param status: 播放状态, 见: structs.AudioControlSTATUS
+        :param text: 状态文本(比如: 简单爱-周杰伦)，可选，status为0时传，其他操作不传
+        :return: 成功返回"{}"
+        """
+        url = f"{self.base_api}/channels/{channel_id}/audio"
+        body = models.audio_control(audio_url, status, text)
+        response = requests.request("POST", url, data=json.dumps(body), headers=self.__headers)
+        if response.text != "{}":
+            self.logger(f"音频控制失败: {response.text}")
+        return response.text
 
     def api_get_self_guilds(self, before="", after="", limit="100", use_cache=False, retstr=False) \
             -> t.Union[str, t.List[structs.Guild], None]:
