@@ -19,6 +19,7 @@ class Intents:  # https://bot.q.qq.com/wiki/develop/api/gateway/intents.html
     GUILD_MESSAGE_REACTIONS = 1 << 10
     FORUM_EVENT = 1 << 28
     MESSAGE_CREATE = 1 << 9
+    MESSAGE_AUDIT = 1 << 27
 
 def on_new_thread(f):
     def task_qwq(*args, **kwargs):

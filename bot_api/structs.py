@@ -42,6 +42,8 @@ class Codes:
             POST_DELETE = "POST_DELETE"  # 当用户删除帖子时
             REPLY_CREATE = "REPLY_CREATE"  # 当用户回复评论时
             REPLY_DELETE = "REPLY_DELETE"  # 当用户回复评论时
+            MESSAGE_AUDIT_PASS = "MESSAGE_AUDIT_PASS"  # 消息审核通过
+            MESSAGE_AUDIT_REJECT = "MESSAGE_AUDIT_REJECT"  # 消息审核不通过
 
         class UserRole:
             member = "1"  # 全体成员
@@ -206,3 +208,50 @@ class Schedule(BaseModel):
     creator: Member
     jump_channel_id: str
     remind_type: str
+
+
+class Role(BaseModel):  # 是否在成员列表中单独展示: 0-否, 1-是
+    id: str  # 身份组ID
+    name: str  # 名称
+    color: int  # ARGB的HEX十六进制颜色值转换后的十进制数值
+    hoist: int  # 是否在成员列表中单独展示: 0-否, 1-是
+    number: int  # 人数
+    member_limit: int  # 成员上限
+
+
+class MessageAudited(BaseModel):  # 消息审核对象
+    audit_id: str
+    message_id: str
+    guild_id: str
+    channel_id: str
+    audit_time: str
+    create_time: str
+
+
+class Announces(BaseModel):  # 公告
+    guild_id: str
+    channel_id: str
+    message_id: str
+
+
+class ChannelPermissions(BaseModel):  # 子频道权限对象
+    channel_id: str
+    user_id: t.Optional[str]
+    role_id: t.Optional[str]
+    permissions: str  # https://bot.q.qq.com/wiki/develop/api/openapi/channel_permissions/model.html#permissions
+
+
+class RetModel:
+    class GetGuildRole(BaseModel):
+        guild_id: str
+        roles: t.List[Role]
+        role_num_limit: str
+
+    class CreateGuildRole(BaseModel):
+        role_id: str
+        role: Role
+
+    class ChangeGuildRole(BaseModel):
+        guild_id: str
+        role_id: str
+        role: Role

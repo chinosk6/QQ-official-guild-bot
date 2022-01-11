@@ -24,6 +24,39 @@ class BotApi(BotLogger):
 
         self._cache = {}
 
+    def _retter(self, get_response: str, wrong_text: str, data_model, retstr: bool, data_type=0):
+        """
+        返回器
+        :param get_response: api返回值
+        :param wrong_text: 错误信息
+        :param data_model: pydantic_model信息
+        :param retstr: 是否强制返回纯文本
+        :param data_type: pydantic_model类型: 0-str, 1-List
+        :return:
+        """
+        data = json.loads(get_response)
+        if "code" in data:
+            self.logger(f"{wrong_text}: {get_response}", error=True)
+            # if retstr:
+            return get_response
+            # return None
+        elif self.api_return_pydantic and not retstr:
+            try:
+                if data_type == 0:
+                    return data_model(**data)
+                elif data_type == 1:
+                    return [data_model(**g) for g in data]
+                else:
+                    self.logger("retter_data_type错误, 将原样返回", warning=True)
+                    return get_response
+            except Exception as sb:
+                self.logger("请求转换为 Basemodel 失败, 将原样返回", error=True)
+                self.logger(f"请求原文: {get_response}", debug=True)
+                print(sb)
+                return get_response
+        else:
+            return get_response
+
     def api_send_message(self, channel_id, msg_id="", content="", image_url="", retstr=False,
                          embed=None, ark=None, others_parameter: t.Optional[t.Dict] = None) \
             -> t.Union[str, structs.Message, None]:
@@ -78,6 +111,7 @@ class BotApi(BotLogger):
         payload = json.dumps(merge_dict(_c, _im, _msgid, _embed, _ark, others_parameter))
 
         response = requests.request("POST", url, headers=self.__headers, data=payload)
+        """
         data = json.loads(response.text)
         if "code" in data:
             self.logger(f"发送信息失败: {response.text}", error=True)
@@ -88,6 +122,8 @@ class BotApi(BotLogger):
             return structs.Message(**data)
         else:
             return response.text
+        """
+        return self._retter(response.text, "发送信息失败", structs.Message, retstr)
 
     def api_mute_guild(self, guild_id, mute_seconds="", mute_end_timestamp=""):
         """
@@ -98,13 +134,12 @@ class BotApi(BotLogger):
         :return: 若成功, 返回空字符串; 失败则返回错误信息
         """
         url = f"{self.base_api}/guilds/{guild_id}/mute"
-        _body = {"mute_end_timestamp": f"{mute_end_timestamp}"} if mute_end_timestamp != "" else\
+        _body = {"mute_end_timestamp": f"{mute_end_timestamp}"} if mute_end_timestamp != "" else \
             {"mute_seconds": f"{mute_seconds}"}
-
         response = requests.request("PATCH", url, data=json.dumps(_body), headers=self.__headers)
         if response.status_code != 204:
             data = response.text
-            self.logger(f"禁言成员失败: {data}", error=True)
+            self.logger(f"禁言频道失败: {data}", error=True)
             return data
         else:
             return ""
@@ -119,7 +154,7 @@ class BotApi(BotLogger):
         :return: 若成功, 返回空字符串; 失败则返回错误信息
         """
         url = f"{self.base_api}/guilds/{guild_id}/members/{member_id}/mute"
-        _body = {"mute_end_timestamp": f"{mute_end_timestamp}"} if mute_end_timestamp != "" else\
+        _body = {"mute_end_timestamp": f"{mute_end_timestamp}"} if mute_end_timestamp != "" else \
             {"mute_seconds": f"{mute_seconds}"}
         response = requests.request("PATCH", url, data=json.dumps(_body), headers=self.__headers)
         if response.status_code != 204:
@@ -128,6 +163,206 @@ class BotApi(BotLogger):
             return data
         else:
             return ""
+
+    def api_guild_roles_list_get(self, guild_id, retstr=False) -> t.Union[str, structs.RetModel.GetGuildRole]:
+        """
+        获取频道身份组列表
+        :param guild_id: 频道ID
+        :param retstr: 强制返回纯文本
+        :return: 频道身份组信息
+        """
+        url = f"{self.base_api}/guilds/{guild_id}/roles"
+        response = requests.request("GET", url, headers=self.__headers)
+        return self._retter(response.text, "获取频道身份组列表失败", structs.RetModel.GetGuildRole, retstr, data_type=0)
+
+    def api_guild_role_create(self, guild_id, name="", color=-1, hoist=1, retstr=False) \
+            -> t.Union[str, structs.RetModel.CreateGuildRole]:
+        """
+        创建频道身份组
+        :param guild_id: 频道ID
+        :param name: 名称
+        :param color: ARGB的HEX十六进制颜色值转换后的十进制数值
+        :param hoist: 在成员列表中单独展示: 0-否, 1-是
+        :param retstr: 强制返回纯文本
+        """
+        url = f"{self.base_api}/guilds/{guild_id}/roles"
+        body = models.role_body(name, color, hoist)
+        response = requests.request("POST", url, data=json.dumps(body), headers=self.__headers)
+        return self._retter(response.text, "创建频道身份组失败", structs.RetModel.CreateGuildRole, retstr, data_type=0)
+
+    def api_guild_role_change(self, guild_id, role_id, name="", color=-1, hoist=1, retstr=False) \
+            -> t.Union[str, structs.RetModel.ChangeGuildRole]:
+        """
+        修改频道身份组
+        :param guild_id: 频道ID
+        :param role_id: 身份组ID
+        :param name: 名称
+        :param color: ARGB的HEX十六进制颜色值转换后的十进制数值
+        :param hoist: 在成员列表中单独展示: 0-否, 1-是
+        :param retstr: 强制返回纯文本
+        """
+        url = f"{self.base_api}/guilds/{guild_id}/roles/{role_id}"
+        body = models.role_body(name, color, hoist)
+        response = requests.request("PATCH", url, data=json.dumps(body), headers=self.__headers)
+        return self._retter(response.text, "修改频道身份组失败", structs.RetModel.ChangeGuildRole, retstr, data_type=0)
+
+    def api_guild_role_remove(self, guild_id, role_id):
+        """
+        删除频道身份组
+        :param guild_id: 频道ID
+        :param role_id: 身份组ID
+        :return: 成功返回空字符串, 失败返回报错
+        """
+        url = f"{self.base_api}/guilds/{guild_id}/roles/{role_id}"
+        response = requests.request("DELETE", url, headers=self.__headers)
+        if response.status_code != 204:
+            self.logger(f"删除频道身份组失败: {response.text}", error=True)
+            return response.text
+        else:
+            return ""
+
+
+    def api_guild_role_member_add(self, guild_id, role_id, user_id, channel_id=""):
+        """
+        增加频道身份组成员
+        :param guild_id: 频道ID
+        :param role_id: 身份组ID
+        :param user_id: 用户ID
+        :param channel_id: 如果要增加的身份组ID是 5-子频道管理员, 则需要填写channel_id指定频道
+        :return: 成功返回空字符串, 失败返回报错
+        """
+        return self._request_guild_role_member(guild_id, role_id, user_id, channel_id, "PUT")
+
+    def api_guild_role_member_remove(self, guild_id, role_id, user_id, channel_id=""):
+        """
+        移除频道身份组成员
+        :param guild_id: 频道ID
+        :param role_id: 身份组ID
+        :param user_id: 用户ID
+        :param channel_id: 如果要增加的身份组ID是 5-子频道管理员, 则需要填写channel_id指定频道
+        :return: 成功返回空字符串, 失败返回报错
+        """
+        return self._request_guild_role_member(guild_id, role_id, user_id, channel_id, "DELETE")
+
+    def api_announces_global_create(self, guild_id, message_id: str, channel_id: str, retstr=False) \
+            -> t.Union[str, structs.Announces]:
+        """
+        创建频道全局公告
+        :param guild_id: 频道ID
+        :param message_id: 设为公告的消息ID
+        :param channel_id: 子频道ID
+        :param retstr: 强制返回纯文本
+        :return: Announces
+        """
+        url = f"{self.base_api}/guilds/{guild_id}/announces"
+        body = {"message_id": message_id, "channel_id": channel_id}
+        response = requests.request("POST", url, data=json.dumps(body), headers=self.__headers)
+        return self._retter(response.text, "创建频道全局公告失败", structs.Announces, retstr, data_type=0)
+
+    def api_announces_global_remove(self, guild_id, message_id="all"):
+        """
+        删除频道全局公告
+        :param guild_id: 频道ID
+        :param message_id: 消息ID. message_id 有值时，会校验 message_id 合法性，若不校验 message_id，请将 message_id 设置为 all
+        :return: 成功返回空字符串, 失败返回错误信息
+        """
+        url = f"{self.base_api}/guilds/{guild_id}/announces/{message_id}"
+        response = requests.request("DELETE", url, headers=self.__headers)
+        if response.status_code != 204:
+            self.logger(f"删除频道全局公告失败: {response.text}")
+            return response.text
+        else:
+            return ""
+
+    def api_announces_channel_create(self, channel_id: str, message_id: str, retstr=False) \
+            -> t.Union[str, structs.Announces]:
+        """
+        创建子频道公告
+        :param channel_id: 子频道ID
+        :param message_id: 设为公告的消息ID
+        :param retstr: 强制返回纯文本
+        :return: Announces
+        """
+        url = f"{self.base_api}/channels/{channel_id}/announces"
+        body = {"message_id": message_id}
+        response = requests.request("POST", url, data=json.dumps(body), headers=self.__headers)
+        return self._retter(response.text, "创建子频道公告失败", structs.Announces, retstr, data_type=0)
+
+    def api_announces_channel_remove(self, channel_id, message_id="all"):
+        """
+        删除子频道公告
+        :param channel_id: 子频道ID
+        :param message_id: 消息ID. message_id 有值时，会校验 message_id 合法性，若不校验 message_id，请将 message_id 设置为 all
+        :return: 成功返回空字符串, 失败返回错误信息
+        """
+        url = f"{self.base_api}/channels/{channel_id}/announces/{message_id}"
+        response = requests.request("DELETE", url, headers=self.__headers)
+        if response.status_code != 204:
+            self.logger(f"删除频道全局公告失败: {response.text}")
+            return response.text
+        else:
+            return ""
+
+    def api_permissions_get_channel(self, channel_id, user_id, retstr=False)\
+            -> t.Union[str, structs.ChannelPermissions]:
+        """
+        获取指定子频道的权限
+        :param channel_id: 子频道ID
+        :param user_id: 用户ID
+        :param retstr: 强制返回纯文本
+        :return: ChannelPermissions, role_id必为None
+        """
+        url = f"{self.base_api}/channels/{channel_id}/members/{user_id}/permissions"
+        response = requests.request("GET", url, headers=self.__headers)
+        return self._retter(response.text, "获取指定子频道的权限失败", structs.ChannelPermissions, retstr, data_type=0)
+
+    def api_permissions_change_channel(self, channel_id, user_id, add: str, remove: str, **kwargs):
+        """
+        修改指定子频道的权限, 详见: https://bot.q.qq.com/wiki/develop/api/openapi/channel_permissions/put_channel_permissions.html
+        :param channel_id: 子频道ID
+        :param user_id: 用户ID
+        :param add: 字符串形式的位图表示赋予用户的权限
+        :param remove: 字符串形式的位图表示赋予用户的权限
+        :return: 成功返回空字符串, 失败返回错误信息
+        """
+        if "setrole" in kwargs:
+            url = f"{self.base_api}/channels/{channel_id}/members/{user_id}/permissions"
+            ft = "修改指定子频道身份组的权限失败"
+        else:
+            url = f"{self.base_api}/channels/{channel_id}/roles/{user_id}/permissions"
+            ft = "修改指定子频道的权限失败"
+        body = {"add": add, "remove": remove}
+        response = requests.request("PUT", url, data=json.dumps(body), headers=self.__headers)
+        if response.status_code != 204:
+            self.logger(f"{ft}: {response.text}")
+            return response.text
+        else:
+            return ""
+
+    def api_permissions_get_channel_group(self, channel_id, role_id, retstr=False)\
+            -> t.Union[str, structs.ChannelPermissions]:
+        """
+        获取指定子频道身份组的权限
+        :param channel_id: 子频道ID
+        :param role_id: 身份组ID
+        :param retstr: 强制返回纯文本
+        :return: ChannelPermissions, user_id必为None
+        """
+        url = f"{self.base_api}/channels/{channel_id}/roles/{role_id}/permissions"
+        response = requests.request("GET", url, headers=self.__headers)
+        return self._retter(response.text, "获取指定子频道身份组的权限失败", structs.ChannelPermissions, retstr, data_type=0)
+
+    def api_permissions_change_channel_group(self, channel_id, role_id, add: str, remove: str):
+        """
+        修改指定子频道身份组的权限, 详见: https://bot.q.qq.com/wiki/develop/api/openapi/channel_permissions/put_channel_permissions.html
+        :param channel_id: 子频道ID
+        :param role_id: 用户ID
+        :param add: 字符串形式的位图表示赋予用户的权限
+        :param remove: 字符串形式的位图表示赋予用户的权限
+        :return: 成功返回空字符串, 失败返回错误信息
+        """
+        return self.api_permissions_change_channel(channel_id, role_id, add, remove, setrole=1)
+
 
     def api_get_self_guilds(self, before="", after="", limit="100", use_cache=False, retstr=False) \
             -> t.Union[str, t.List[structs.Guild], None]:
@@ -198,19 +433,7 @@ class BotApi(BotLogger):
         """
         url = f"{self.base_api}/channels/{channel_id}/schedules"
         response = requests.request("GET", url, headers=self.__headers)
-        data = json.loads(response.text)
-        if "code" in data:
-            self.logger(f"获取日程列表失败: {response.text}", error=True)
-            if retstr:
-                return response.text
-            return None
-        elif self.api_return_pydantic and not retstr:
-            if data is not None:
-                return [structs.Schedule(**_d) for _d in data]
-            else:
-                return None
-        else:
-            return response.text
+        return self._retter(response.text, "获取日程列表失败", structs.Schedule, retstr, data_type=1)
 
     def api_get_schedule(self, channel_id, schedule_id, retstr=False) -> t.Union[str, structs.Schedule, None]:
         """
@@ -222,19 +445,7 @@ class BotApi(BotLogger):
         """
         url = f"{self.base_api}/channels/{channel_id}/schedules/{schedule_id}"
         response = requests.request("GET", url, headers=self.__headers)
-        data = json.loads(response.text)
-        if "code" in data:
-            self.logger(f"获取日程信息失败: {response.text}", error=True)
-            if retstr:
-                return response.text
-            return None
-        elif self.api_return_pydantic and not retstr:
-            if data is not None:
-                return structs.Schedule(**data)
-            else:
-                return None
-        else:
-            return response.text
+        return self._retter(response.text, "获取日程信息失败", structs.Schedule, retstr, data_type=0)
 
     def api_schedule_create(self, channel_id, name: str, description: str, start_timestamp: str, end_timestamp: str,
                             jump_channel_id: str, remind_type: str, retstr=False) -> t.Union[str, structs.Schedule,
@@ -255,19 +466,7 @@ class BotApi(BotLogger):
         payload = json.dumps(models.schedule_json(name, description, start_timestamp, end_timestamp,
                                                   jump_channel_id, remind_type))
         response = requests.request("POST", url, headers=self.__headers, data=payload)
-        data = json.loads(response.text)
-        if "code" in data:
-            self.logger(f"创建日程失败: {response.text}", error=True)
-            if retstr:
-                return response.text
-            return None
-        elif self.api_return_pydantic and not retstr:
-            if data is not None:
-                return structs.Schedule(**data)
-            else:
-                return None
-        else:
-            return response.text
+        return self._retter(response.text, "创建日程失败", structs.Schedule, retstr, data_type=0)
 
     def api_schedule_change(self, channel_id, schedule_id, name: str, description: str, start_timestamp: str,
                             end_timestamp: str, jump_channel_id: str, remind_type: str, retstr=False) \
@@ -289,19 +488,7 @@ class BotApi(BotLogger):
         payload = json.dumps(models.schedule_json(name, description, start_timestamp, end_timestamp,
                                                   jump_channel_id, remind_type))
         response = requests.request("PATCH", url, headers=self.__headers, data=payload)
-        data = json.loads(response.text)
-        if "code" in data:
-            self.logger(f"创建日程失败: {response.text}", error=True)
-            if retstr:
-                return response.text
-            return None
-        elif self.api_return_pydantic and not retstr:
-            if data is not None:
-                return structs.Schedule(**data)
-            else:
-                return None
-        else:
-            return response.text
+        return self._retter(response.text, "修改日程失败", structs.Schedule, retstr, data_type=0)
 
     def api_schedule_delete(self, channel_id, schedule_id):
         """
@@ -344,17 +531,7 @@ class BotApi(BotLogger):
         """
         url = f"{self.base_api}/guilds/{guild_id}/members"
         response = requests.request("GET", url, headers=self.__headers)
-        data = json.loads(response.text)
-
-        if "code" in data:
-            self.logger(f"获取频道成员列表失败: {response.text}", error=True)
-            if retstr:
-                return response.text
-            return None
-        elif self.api_return_pydantic and not retstr:
-            return [structs.Member(**_d) for _d in data]
-        else:
-            return response.text
+        return self._retter(response.text, "获取频道成员列表失败", structs.Member, retstr, data_type=1)
 
     def api_pv_kick_member(self, guild_id, user_id) -> str:
         """
@@ -393,16 +570,7 @@ class BotApi(BotLogger):
             "parent_id": channel_parent_id
         }
         response = requests.request("POST", url, data=json.dumps(body_s), headers=self.__headers)
-        data = json.loads(response.text)
-        if "code" in data:
-            self.logger(f"创建子频道失败: {response.text}", error=True)
-            if retstr:
-                return response.text
-            return None
-        elif self.api_return_pydantic and not retstr:
-            return structs.Channel(**data)
-        else:
-            return response.text
+        return self._retter(response.text, "创建子频道失败", structs.Channel, retstr, data_type=0)
 
     def api_pv_change_channel(self, channel_id, channel_name: str, channel_type: int,
                               channel_position: int, channel_parent_id: int, retstr=False) \
@@ -425,16 +593,7 @@ class BotApi(BotLogger):
             "parent_id": channel_parent_id
         }
         response = requests.request("PATCH", url, data=json.dumps(body_s), headers=self.__headers)
-        data = json.loads(response.text)
-        if "code" in data:
-            self.logger(f"修改子频道失败: {response.text}", error=True)
-            if retstr:
-                return response.text
-            return None
-        elif self.api_return_pydantic and not retstr:
-            return structs.Channel(**data)
-        else:
-            return response.text
+        return self._retter(response.text, "修改子频道失败", structs.Channel, retstr, data_type=0)
 
     def api_pv_delete_channel(self, channel_id):
         """
@@ -453,75 +612,27 @@ class BotApi(BotLogger):
     def get_guild_info(self, guild_id, retstr=False) -> t.Union[str, structs.Guild, None]:
         url = f"{self.base_api}/guilds/{guild_id}"
         response = requests.request("GET", url, headers=self.__headers)
-        data = json.loads(response.text)
-        if "code" in data:
-            self.logger(f"获取频道信息失败: {response.text}", error=True)
-            if retstr:
-                return response.text
-            return None
-        elif self.api_return_pydantic and not retstr:
-            return structs.Guild(**data)
-        else:
-            return response.text
+        return self._retter(response.text, "获取频道信息失败", structs.Guild, retstr, data_type=0)
 
     def get_guild_user_info(self, guild_id, member_id, retstr=False) -> t.Union[str, structs.Member, None]:
         url = f"{self.base_api}/guilds/{guild_id}/members/{member_id}"
         response = requests.request("GET", url, headers=self.__headers)
-        data = json.loads(response.text)
-        if "code" in data:
-            self.logger(f"获取成员信息失败: {response.text}", error=True)
-            if retstr:
-                return response.text
-            return None
-        elif self.api_return_pydantic and not retstr:
-            try:
-                return structs.Member(**data)
-            except:
-                return response.text
-        else:
-            return response.text
+        return self._retter(response.text, "获取成员信息失败", structs.Member, retstr, data_type=0)
 
     def get_channel_info(self, channel_id, retstr=False) -> t.Union[str, structs.Channel, None]:
         url = f"{self.base_api}/channels/{channel_id}"
         response = requests.request("GET", url, headers=self.__headers)
-        data = json.loads(response.text)
-        if "code" in data:
-            self.logger(f"获取子频道信息失败: {response.text}", error=True)
-            if retstr:
-                return response.text
-            return None
-        elif self.api_return_pydantic and not retstr:
-            return structs.Channel(**data)
-        else:
-            return response.text
+        return self._retter(response.text, "获取子频道信息失败", structs.Channel, retstr, data_type=0)
 
     def get_guild_channel_list(self, guild_id, retstr=False) -> t.Union[str, t.List[structs.Channel], None]:
         url = f"{self.base_api}/guilds/{guild_id}/channels"
         response = requests.request("GET", url, headers=self.__headers)
-        data = json.loads(response.text)
-        if "code" in data:
-            self.logger(f"获取子频道列表失败: {response.text}", error=True)
-            if retstr:
-                return response.text
-            return None
-        elif self.api_return_pydantic and not retstr:
-            return [structs.Channel(**_c) for _c in data]
-        else:
-            return response.text
+        return self._retter(response.text, "获取子频道列表失败", structs.Channel, retstr, data_type=1)
 
     def get_message(self, channel_id, message_id, retstr=False) -> t.Union[str, structs.Message, None]:
         url = f"{self.base_api}/channels/{channel_id}/messages/{message_id}"
         response = requests.request("GET", url, headers=self.__headers)
-        data = json.loads(response.text)
-        if "code" in data:
-            self.logger(f"获取消息信息失败: {response.text}", error=True)
-            if retstr:
-                return response.text
-            return None
-        elif self.api_return_pydantic and not retstr:
-            return structs.Message(**data)
-        else:
-            return response.text
+        return self._retter(response.text, "获取消息信息失败", structs.Message, retstr, data_type=0)
 
     def get_self_info(self, use_cache=False) -> t.Union[str, structs.User, None]:
         if use_cache and "self_info" in self._cache:
@@ -568,5 +679,15 @@ class BotApi(BotLogger):
         else:
             return get_response
 
-    # TODO 更多API
+    def _request_guild_role_member(self, guild_id, role_id, user_id, channel_id="", request_function="PUT"):
+        url = f"{self.base_api}/guilds/{guild_id}/members/{user_id}/roles/{role_id}"
+        body = {"channel": {"id": channel_id}} if channel_id != "" else None
+        response = requests.request(request_function, url, data=None if body is None else json.dumps(body),
+                                    headers=self.__headers)
+        if response.status_code != 204:
+            self.logger(f"{'增加' if request_function == 'PUT' else '删除'}频道身份组成员失败: {response.text}", error=True)
+            return response.text
+        else:
+            return ""
 
+    # TODO 更多API

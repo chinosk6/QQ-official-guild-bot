@@ -146,6 +146,8 @@ bot.api_send_reply_message(channel_id, message_id, ark=send_ark)
 | POST_DELETE              | 暂不支持                 | 用户删除帖子                          |
 | REPLY_CREATE             | 暂不支持                 | 用户回复评论                          |
 | REPLY_DELETE             | 暂不支持                 | 用户回复评论                          |
+| MESSAGE_AUDIT_PASS       | MessageAudited           | 消息审核通过                          |
+| MESSAGE_AUDIT_REJECT     | MessageAudited           | 消息审核不通过                        |
 
 
 
@@ -167,7 +169,7 @@ def get_at_message(event: bot_api.structs.MessageReaction):  # 函数参数类�
 - 初始化Bot实例后, 输入`bot.api_`, 即可根据代码补全进行使用
 
 ```python
-api_send_reply_message()  # 发送消息
+api_send_message()  # 发送消息
 api_mute_guild()  # 全频道禁言
 api_mute_member()  # 指定用户禁言
 api_get_self_guilds()  # 获取Bot加入的频道列表
@@ -183,6 +185,21 @@ api_schedule_create()  # 创建日程
 api_schedule_change()  # 修改日程
 api_schedule_delete()  # 删除日程
 api_message_recall()  # 撤回消息
+api_guild_roles_list_get()  # 获取频道身份组列表
+api_guild_role_create()  # 创建频道身份组
+api_guild_role_change()  # 修改频道身份组
+api_guild_role_remove()  # 删除频道身份组
+api_guild_role_member_add()  # 增加频道身份组成员
+api_guild_role_member_remove()  # 移除频道身份组成员
+api_announces_global_create()  # 创建频道全局公告
+api_announces_global_remove()  # 删除频道全局公告
+api_announces_channel_create()  # 创建子频道公告
+api_announces_channel_remove()  # 删除子频道公告
+api_permissions_get_channel()  # 获取指定子频道的权限
+api_permissions_change_channel()  # 修改指定子频道的权限
+api_permissions_get_channel_group()  # 获取指定子频道身份组的权限
+api_permissions_change_channel_group()  # 修改指定子频道身份组的权限
+
 api_pv_get_member_list()  # 仅私域机器人可用 - 取频道成员列表
 api_pv_kick_member()  # 仅私域机器人可用 - 踢出指定成员
 api_pv_create_channel()  # 仅私域机器人可用 - 创建子频道

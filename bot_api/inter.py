@@ -29,7 +29,9 @@ class BotMessageDistributor(api.BotApi):
                              BCd.SeverCode.AUDIO_OFF_MIC: ["下麦", structs.AudioAction],
                              BCd.SeverCode.MESSAGE_REACTION_ADD: ["添加表情表态", structs.MessageReaction],
                              BCd.SeverCode.MESSAGE_REACTION_REMOVE: ["移除表情表态", structs.MessageReaction],
-                             BCd.SeverCode.FUNC_CALL_AFTER_BOT_LOAD: ["Bot载入完成后加载函数", None]
+                             BCd.SeverCode.FUNC_CALL_AFTER_BOT_LOAD: ["Bot载入完成后加载函数", None],
+                             BCd.SeverCode.MESSAGE_AUDIT_PASS: ["消息审核通过", structs.MessageAudited],
+                             BCd.SeverCode.MESSAGE_AUDIT_REJECT: ["消息审核不通过", structs.MessageAudited]
                              }
 
         self.bot_events: Dict[str, List] = {}
