@@ -6,10 +6,11 @@ BCd = structs.Codes
 
 class BotMessageDistributor(api.BotApi):
     def __init__(self, appid: int, token: str, secret: str, sandbox: bool, debug=False, api_return_pydantic=False,
-                 output_log=True, log_path=""):
+                 output_log=True, log_path="", raise_api_error=False):
         self.debug = debug
         super().__init__(appid=appid, token=token, secret=secret, debug=debug, sandbox=sandbox,
-                         api_return_pydantic=api_return_pydantic, output_log=output_log, log_path=log_path)
+                         api_return_pydantic=api_return_pydantic, output_log=output_log, log_path=log_path,
+                         raise_api_error=raise_api_error)
 
         self.known_events = {BCd.SeverCode.BotGroupAtMessage: ["群艾特消息", structs.Message],
                              BCd.SeverCode.AT_MESSAGE_CREATE: ["群艾特消息", structs.Message],

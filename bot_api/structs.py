@@ -215,7 +215,7 @@ class Schedule(BaseModel):
     remind_type: str
 
 
-class Role(BaseModel):  # 是否在成员列表中单独展示: 0-否, 1-是
+class Role(BaseModel):  # 身份组对象
     id: str  # 身份组ID
     name: str  # 名称
     color: int  # ARGB的HEX十六进制颜色值转换后的十进制数值

@@ -30,7 +30,8 @@ def on_new_thread(f):
 
 class BotApp(inter.BotMessageDistributor):
     def __init__(self, appid: int, token: str, secret: str, is_sandbox: bool, inters: t.List,
-                 debug=False, api_return_pydantic=False, ignore_at_self=False, output_log=True, log_path=""):
+                 debug=False, api_return_pydantic=False, ignore_at_self=False, output_log=True, log_path="",
+                 raise_api_error=False):
         """
         BotAPP
         :param appid: BotAPPId
@@ -43,9 +44,11 @@ class BotApp(inter.BotMessageDistributor):
         :param ignore_at_self: 过滤消息中艾特bot的内容
         :param output_log: 是否输出日志到本地
         :param log_path: 日志输出位置, 默认为sdk目录内log文件夹
+        :param raise_api_error: 当API调用出错时, 抛出 BotCallingAPIError 异常
         """
         super().__init__(appid=appid, token=token, secret=secret, sandbox=is_sandbox, debug=debug,
-                         api_return_pydantic=api_return_pydantic, output_log=output_log, log_path=log_path)
+                         api_return_pydantic=api_return_pydantic, output_log=output_log, log_path=log_path,
+                         raise_api_error=raise_api_error)
         self.inters = inters
         self.ignore_at_self = ignore_at_self
         self.self_id = ""

@@ -8,7 +8,7 @@ from .logger import BotLogger
 
 class BotApi(BotLogger):
     def __init__(self, appid: int, token: str, secret: str, debug: bool, sandbox: bool, api_return_pydantic=False,
-                 output_log=True, log_path=""):
+                 output_log=True, log_path="", raise_api_error=False):
         super().__init__(debug=debug, write_out_log=output_log, log_path=log_path)
         self.appid = appid
         self.token = token
@@ -16,6 +16,7 @@ class BotApi(BotLogger):
         self.base_api = "https://sandbox.api.sgroup.qq.com" if sandbox else "https://api.sgroup.qq.com"
         self.debug = debug
         self.api_return_pydantic = api_return_pydantic
+        self.raise_api_error = raise_api_error
 
         self.__headers = {
             'Authorization': f'Bot {self.appid}.{self.token}',
@@ -23,6 +24,20 @@ class BotApi(BotLogger):
         }
 
         self._cache = {}
+
+    def _throwerr(self, error_response: str, error_message=""):
+        """
+        抛出API异常
+        :param error_response: API返回信息
+        :param error_message: 自定义描述
+        """
+        if self.raise_api_error:
+            raise models.BotCallingAPIError(error_response, error_message)
+
+    def _tlogger(self, msg: str, debug=False, warning=False, error=False, error_resp=None):
+        super().logger(msg=msg, debug=debug, warning=warning, error=error)
+        if error_resp is not None and error:
+            self._throwerr(error_response=error_resp, error_message=msg)
 
     def _retter(self, get_response: str, wrong_text: str, data_model, retstr: bool, data_type=0):
         """
@@ -36,7 +51,7 @@ class BotApi(BotLogger):
         """
         data = json.loads(get_response)
         if "code" in data:
-            self.logger(f"{wrong_text}: {get_response}", error=True)
+            self._tlogger(f"{wrong_text}: {get_response}", error=True, error_resp=get_response)
             # if retstr:
             return get_response
             # return None
@@ -47,11 +62,12 @@ class BotApi(BotLogger):
                 elif data_type == 1:
                     return [data_model(**g) for g in data]
                 else:
-                    self.logger("retter_data_type错误, 将原样返回", warning=True)
+                    self._tlogger("retter_data_type错误, 将原样返回", warning=True)
+
                     return get_response
             except Exception as sb:
-                self.logger("请求转换为 Basemodel 失败, 将原样返回", error=True)
-                self.logger(f"请求原文: {get_response}", debug=True)
+                self._tlogger("请求转换为 Basemodel 失败, 将原样返回", error=True)
+                self._tlogger(f"请求原文: {get_response}", debug=True)
                 print(sb)
                 return get_response
         else:
@@ -91,7 +107,7 @@ class BotApi(BotLogger):
 
         url = f"{self.base_api}/channels/{channel_id}/messages"
         if content == "" and image_url == "" and embed is None and ark is None and others_parameter is None:
-            self.logger("消息为空, 请检查", error=True)
+            self._tlogger("消息为空, 请检查", error=True)
             return None
 
         _c = {"content": content} if content != "" else None
@@ -114,7 +130,7 @@ class BotApi(BotLogger):
         """
         data = json.loads(response.text)
         if "code" in data:
-            self.logger(f"发送信息失败: {response.text}", error=True)
+            self._tlogger(f"发送信息失败: {response.text}", error=True)
             if retstr:
                 return response.text
             return None
@@ -139,7 +155,7 @@ class BotApi(BotLogger):
         response = requests.request("PATCH", url, data=json.dumps(_body), headers=self.__headers)
         if response.status_code != 204:
             data = response.text
-            self.logger(f"禁言频道失败: {data}", error=True)
+            self._tlogger(f"禁言频道失败: {data}", error=True, error_resp=data)
             return data
         else:
             return ""
@@ -159,7 +175,7 @@ class BotApi(BotLogger):
         response = requests.request("PATCH", url, data=json.dumps(_body), headers=self.__headers)
         if response.status_code != 204:
             data = response.text
-            self.logger(f"禁言成员失败: {data}", error=True)
+            self._tlogger(f"禁言成员失败: {data}", error=True, error_resp=data)
             return data
         else:
             return ""
@@ -216,11 +232,10 @@ class BotApi(BotLogger):
         url = f"{self.base_api}/guilds/{guild_id}/roles/{role_id}"
         response = requests.request("DELETE", url, headers=self.__headers)
         if response.status_code != 204:
-            self.logger(f"删除频道身份组失败: {response.text}", error=True)
+            self._tlogger(f"删除频道身份组失败: {response.text}", error=True, error_resp=response.text)
             return response.text
         else:
             return ""
-
 
     def api_guild_role_member_add(self, guild_id, role_id, user_id, channel_id=""):
         """
@@ -269,7 +284,7 @@ class BotApi(BotLogger):
         url = f"{self.base_api}/guilds/{guild_id}/announces/{message_id}"
         response = requests.request("DELETE", url, headers=self.__headers)
         if response.status_code != 204:
-            self.logger(f"删除频道全局公告失败: {response.text}")
+            self._tlogger(f"删除频道全局公告失败: {response.text}", error_resp=response.text)
             return response.text
         else:
             return ""
@@ -298,12 +313,12 @@ class BotApi(BotLogger):
         url = f"{self.base_api}/channels/{channel_id}/announces/{message_id}"
         response = requests.request("DELETE", url, headers=self.__headers)
         if response.status_code != 204:
-            self.logger(f"删除频道全局公告失败: {response.text}")
+            self._tlogger(f"删除频道全局公告失败: {response.text}", error_resp=response.text)
             return response.text
         else:
             return ""
 
-    def api_permissions_get_channel(self, channel_id, user_id, retstr=False)\
+    def api_permissions_get_channel(self, channel_id, user_id, retstr=False) \
             -> t.Union[str, structs.ChannelPermissions]:
         """
         获取指定子频道的权限
@@ -334,12 +349,12 @@ class BotApi(BotLogger):
         body = {"add": add, "remove": remove}
         response = requests.request("PUT", url, data=json.dumps(body), headers=self.__headers)
         if response.status_code != 204:
-            self.logger(f"{ft}: {response.text}")
+            self._tlogger(f"{ft}: {response.text}", error_resp=response.text)
             return response.text
         else:
             return ""
 
-    def api_permissions_get_channel_group(self, channel_id, role_id, retstr=False)\
+    def api_permissions_get_channel_group(self, channel_id, role_id, retstr=False) \
             -> t.Union[str, structs.ChannelPermissions]:
         """
         获取指定子频道身份组的权限
@@ -376,7 +391,7 @@ class BotApi(BotLogger):
         body = models.audio_control(audio_url, status, text)
         response = requests.request("POST", url, data=json.dumps(body), headers=self.__headers)
         if response.text != "{}":
-            self.logger(f"音频控制失败: {response.text}")
+            self._tlogger(f"音频控制失败: {response.text}", error_resp=response.text)
         return response.text
 
     def api_get_self_guilds(self, before="", after="", limit="100", use_cache=False, retstr=False) \
@@ -516,7 +531,7 @@ class BotApi(BotLogger):
         response = requests.request("DELETE", url, headers=self.__headers)
         if response.status_code != 204:
             data = response.text
-            self.logger(f"日程删除失败: {data}")
+            self._tlogger(f"日程删除失败: {data}", error_resp=response.text)
             return data
         else:
             return ""
@@ -532,7 +547,7 @@ class BotApi(BotLogger):
         response = requests.request("DELETE", url, headers=self.__headers)
         if response.status_code != 200:
             data = response.text
-            self.logger(f"撤回消息失败: {data}")
+            self._tlogger(f"撤回消息失败: {data}", error_resp=response.text)
             return data
         else:
             return ""
@@ -559,7 +574,7 @@ class BotApi(BotLogger):
         response = requests.request("DELETE", url, headers=self.__headers)
 
         if response.status_code != 204:
-            self.logger(f"移除成员失败: {response.text}", error=True)
+            self._tlogger(f"移除成员失败: {response.text}", error=True, error_resp=response.text)
             return response.text
         else:
             return ""
@@ -619,7 +634,7 @@ class BotApi(BotLogger):
         url = f"{self.base_api}/channels/{channel_id}"
         response = requests.request("DELETE", url, headers=self.__headers)
         if response.status_code != 200 and response.status_code != 204:  # ?
-            self.logger(f"删除子频道失败: {response.text}")
+            self._tlogger(f"删除子频道失败: {response.text}", error_resp=response.text)
             return response.text
         else:
             return ""
@@ -660,7 +675,7 @@ class BotApi(BotLogger):
 
         data = json.loads(get_response)
         if "code" in data:
-            self.logger(f"获取自身信息失败: {get_response}", error=True)
+            self._tlogger(f"获取自身信息失败: {get_response}", error=True, error_resp=get_response)
             return None
         elif self.api_return_pydantic:
             data["bot"] = True
@@ -685,7 +700,7 @@ class BotApi(BotLogger):
 
         data = json.loads(get_response)
         if "code" in data:
-            self.logger(f"获取频道列表失败: {get_response}", error=True)
+            self._tlogger(f"获取频道列表失败: {get_response}", error=True, error_resp=get_response)
             if retstr:
                 return get_response
             return None
@@ -700,7 +715,8 @@ class BotApi(BotLogger):
         response = requests.request(request_function, url, data=None if body is None else json.dumps(body),
                                     headers=self.__headers)
         if response.status_code != 204:
-            self.logger(f"{'增加' if request_function == 'PUT' else '删除'}频道身份组成员失败: {response.text}", error=True)
+            self._tlogger(f"{'增加' if request_function == 'PUT' else '删除'}频道身份组成员失败: {response.text}", error=True,
+                          error_resp=response.text)
             return response.text
         else:
             return ""
