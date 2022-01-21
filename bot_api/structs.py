@@ -63,7 +63,7 @@ class User(BaseModel):  # 用户对象
     id: str
     username: str
     avatar: t.Optional[str]
-    bot: bool
+    bot: t.Optional[bool]
     union_openid: t.Optional[str]
     union_user_account: t.Optional[str]
 
@@ -135,6 +135,7 @@ class Message(BaseModel):  # 消息对象
     mentions: t.Optional[t.List[User]]
     member: t.Optional[Member]
     ark: t.Optional[MessageArk]
+    message_type_sdk: t.Optional[str]
 
 
 class Guild(BaseModel):  # 频道对象

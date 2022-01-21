@@ -38,7 +38,7 @@ class BotServer(sender.MessageSender):
         if not self.allow_push and reply_msg_id == "":
             self.bot.logger("不发送允许PUSH消息, 请添加回复id, 或者将\"allow_push\"设置为True", warning=True)
         else:
-            sendmsg = self.bot.api_send_reply_message(channel_id, reply_msg_id, cmsg, img_url, retstr=True)
+            sendmsg = self.bot.api_send_message(channel_id, reply_msg_id, cmsg, img_url, retstr=True)
             sdata = json.loads(sendmsg)
             if "id" in sdata:
                 ret = {

@@ -14,6 +14,7 @@ class BotMessageDistributor(api.BotApi):
 
         self.known_events = {BCd.SeverCode.BotGroupAtMessage: ["群艾特消息", structs.Message],
                              BCd.SeverCode.AT_MESSAGE_CREATE: ["群艾特消息", structs.Message],
+                             BCd.SeverCode.DIRECT_MESSAGE_CREATE: ["私聊消息", structs.Message],
                              BCd.SeverCode.MESSAGE_CREATE: ["收到消息(私域)", structs.Message],
                              BCd.SeverCode.GUILD_CREATE: ["Bot加入频道消息", structs.Guild],
                              BCd.SeverCode.GUILD_UPDATE: ["频道更新", structs.Guild],

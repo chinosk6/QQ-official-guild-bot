@@ -159,6 +159,11 @@ class BotApp(inter.BotMessageDistributor):
                                     if self.EVENT_MESSAGE_CREATE_CALL_AT_MESSAGE_CREATE:  # 普通消息依旧调用艾特消息函数
                                         _send_event(self.known_events[event_types.AT_MESSAGE_CREATE][1],
                                                     changed_s_type=event_types.AT_MESSAGE_CREATE)
+                                if s_type in [event_types.MESSAGE_CREATE, event_types.AT_MESSAGE_CREATE]:  # 群消息
+                                    data["d"]["message_type_sdk"] = "guild"
+                                elif s_type == event_types.DIRECT_MESSAGE_CREATE:  # 私聊
+                                    data["d"]["message_type_sdk"] = "private"
+
                             _send_event(s_dantic)
 
                     # TODO 主题相关事件

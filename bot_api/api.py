@@ -73,6 +73,34 @@ class BotApi(BotLogger):
         else:
             return get_response
 
+    def api_reply_message(self, event: structs.Message, content="", image_url="", retstr=False,
+                          embed=None, ark=None, others_parameter: t.Optional[t.Dict] = None) \
+            -> t.Union[str, structs.Message, None]:
+        """
+        快速回复消息, 支持频道消息/私聊消息
+        :param event: 原event
+        :param content: 消息内容, 可空
+        :param image_url: 图片url, 可空
+        :param retstr: 调用此API后返回纯文本
+        :param embed: embed消息, 可空
+        :param ark: ark消息, 可空
+        :param others_parameter: 其它自定义字段
+        """
+        event_type = event.message_type_sdk
+
+        if event_type == "guild":
+            return self.api_send_message(channel_id=event.channel_id, msg_id=event.id, content=content,
+                                         image_url=image_url, retstr=retstr, embed=embed, ark=ark,
+                                         others_parameter=others_parameter)
+        elif event_type == "private":
+            return self.api_send_private_message(guild_id=event.guild_id, channel_id=event.channel_id, msg_id=event.id,
+                                                 content=content, image_url=image_url,
+                                                 retstr=retstr, embed=embed, ark=ark, others_parameter=others_parameter)
+        else:
+            self.logger("reply_message() - 无法识别传入的event", error=True)
+            return None
+
+
     def api_send_message(self, channel_id, msg_id="", content="", image_url="", retstr=False,
                          embed=None, ark=None, others_parameter: t.Optional[t.Dict] = None) \
             -> t.Union[str, structs.Message, None]:
@@ -87,11 +115,36 @@ class BotApi(BotLogger):
         :param ark: ark消息, 可空
         :param others_parameter: 其它自定义字段
         """
-        return self.api_send_reply_message(channel_id=channel_id, msg_id=msg_id, content=content, image_url=image_url,
-                                           retstr=retstr, embed=embed, ark=ark, others_parameter=others_parameter)
+        return self._api_send_reply_message(channel_id=channel_id, msg_id=msg_id, content=content, image_url=image_url,
+                                            retstr=retstr, embed=embed, ark=ark, others_parameter=others_parameter)
+
+    def api_send_private_message(self, guild_id, channel_id, msg_id="", content="", image_url="", retstr=False,
+                                 embed=None, ark=None, others_parameter: t.Optional[t.Dict] = None):
+        """
+        发送私聊消息
+        :param guild_id: 频道ID
+        :param channel_id: 子频道ID
+        :param msg_id: 消息ID, 可空
+        :param content: 消息内容, 可空
+        :param image_url: 图片url, 可空
+        :param retstr: 调用此API后返回纯文本
+        :param embed: embed消息, 可空
+        :param ark: ark消息, 可空
+        :param others_parameter: 其它自定义字段
+        """
+        return self._api_send_reply_message(channel_id=channel_id, msg_id=msg_id, content=content, image_url=image_url,
+                                            retstr=retstr, embed=embed, ark=ark, others_parameter=others_parameter,
+                                            guild_id=guild_id)
 
     def api_send_reply_message(self, channel_id, msg_id="", content="", image_url="", retstr=False,
                                embed=None, ark=None, others_parameter: t.Optional[t.Dict] = None) \
+            -> t.Union[str, structs.Message, None]:
+        self.logger("注意: 'api_send_reply_message' 函数已更名为 'api_send_message', 请尽快修改您的代码, 此方法将在不久后移除")
+        return self._api_send_reply_message(channel_id=channel_id, msg_id=msg_id, content=content, image_url=image_url,
+                                            retstr=retstr, embed=embed, ark=ark, others_parameter=others_parameter)
+
+    def _api_send_reply_message(self, channel_id, msg_id="", content="", image_url="", retstr=False,
+                                embed=None, ark=None, others_parameter: t.Optional[t.Dict] = None, guild_id=None) \
             -> t.Union[str, structs.Message, None]:
         """
         发送消息
@@ -103,9 +156,11 @@ class BotApi(BotLogger):
         :param embed: embed消息, 可空
         :param ark: ark消息, 可空
         :param others_parameter: 其它自定义字段
+        :param guild_id: 填写该字段后将发送私聊消息
         """
 
-        url = f"{self.base_api}/channels/{channel_id}/messages"
+        url = f"{self.base_api}/channels/{channel_id}/messages" if guild_id is None else \
+            f"{self.base_api}/dms/{guild_id}/messages"
         if content == "" and image_url == "" and embed is None and ark is None and others_parameter is None:
             self._tlogger("消息为空, 请检查", error=True)
             return None
