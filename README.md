@@ -13,11 +13,11 @@
 import bot_api
 from bot_api.models import Ark, Embed
 
-
 bot = bot_api.BotApp(123456, "你的bot token", "你的bot secret",
                      is_sandbox=True, debug=True, api_return_pydantic=True,
                      ignore_at_self=False,  # 过滤消息正文中艾特Bot自身的内容, 默认为False
-                     inters=[bot_api.Intents.GUILDS, bot_api.Intents.AT_MESSAGES, bot_api.Intents.GUILD_MEMBERS])  # 事件订阅
+                     inters=[bot_api.Intents.GUILDS, bot_api.Intents.AT_MESSAGES,
+                             bot_api.Intents.GUILD_MEMBERS])  # 事件订阅
 
 
 @bot.receiver(bot_api.structs.Codes.SeverCode.BotGroupAtMessage)  # 填入对应的参数实现处理对应事件
@@ -26,20 +26,20 @@ def get_at_message(chain: bot_api.structs.Message):  # 注册一个艾特消息�
                f"内用户: {chain.author.username}({chain.author.id}) 的消息: {chain.content} ({chain.id})")
 
     if "你好" in chain.content:
-        bot.api_send_reply_message(chain.channel_id, chain.id, "hello world!")
+        bot._api_send_reply_message(chain.channel_id, chain.id, "hello world!")
     elif "test" in chain.content:
-        bot.api_send_reply_message(chain.channel_id, chain.id, "chieri在哟~")
+        bot._api_send_reply_message(chain.channel_id, chain.id, "chieri在哟~")
     elif "/echo" in chain.content:
         reply = chain.content[chain.content.find("/echo") + len("/echo"):].strip()
-        bot.api_send_reply_message(chain.channel_id, chain.id, reply)
-        
+        bot._api_send_reply_message(chain.channel_id, chain.id, reply)
+
     elif "/embed" in chain.content:  # 发送embed, 需要Ark权限
         send_embed = Embed("标题", ["文本1", "文本2", "文本3"], image_url=None)
-        bot.api_send_reply_message(chain.channel_id, chain.id, embed=send_embed)
+        bot._api_send_reply_message(chain.channel_id, chain.id, embed=send_embed)
 
     elif "/ark" in chain.content:  # 发送ark消息, 需要Ark权限
         send_ark = Ark.LinkWithText("描述", "提示信息", [["纯文本1"], ["纯文本2"], ["链接文本1", "http://baidu.com"]])
-        bot.api_send_reply_message(chain.channel_id, chain.id, ark=send_ark)
+        bot._api_send_reply_message(chain.channel_id, chain.id, ark=send_ark)
 
 
 bot.start()  # 启动bot
@@ -61,13 +61,13 @@ bot.start()  # 启动bot
   - 一般情况下, 您可以:
 
 ```python
-bot.api_send_reply_message(chain.channel_id, chain.id, "这是消息", "http://您的图片")
+bot._api_send_reply_message(chain.channel_id, chain.id, "这是消息", "http://您的图片")
 ```
 
   - 您也可以:
 
 ```python
-bot.api_send_reply_message(chain.channel_id, chain.id, others_parameter={"content": "这是消息", "image": "https://您的图片"})
+bot._api_send_reply_message(chain.channel_id, chain.id, others_parameter={"content": "这是消息", "image": "https://您的图片"})
 ```
 
 
@@ -88,9 +88,10 @@ from bot_api.models import Ark, Embed
 
 ```python
 send_embed = Embed("标题", ["文本1", "文本2", "文本3"], image_url="http://你的图片")
-"image_url"参数可选, 若没有图片, 则不填
+"image_url"
+参数可选, 若没有图片, 则不填
 
-bot.api_send_reply_message(channel_id, message_id, embed=send_embed)
+bot._api_send_reply_message(channel_id, message_id, embed=send_embed)
 ```
 
 ### 发送[Ark](https://bot.q.qq.com/wiki/develop/api/openapi/message/message_template.html)消息
@@ -98,9 +99,10 @@ bot.api_send_reply_message(channel_id, message_id, embed=send_embed)
 - `Ark`类中目前有`LinkWithText`, `TextAndThumbnail`, `BigImage`三个子类, 分别对应 [23 链接+文本列表模板](https://bot.q.qq.com/wiki/develop/api/openapi/message/template/template_23.html), [24 文本+缩略图模板](https://bot.q.qq.com/wiki/develop/api/openapi/message/template/template_24.html), [37 大图模板](https://bot.q.qq.com/wiki/develop/api/openapi/message/template/template_37.html), 下面以构造相对复杂的 [23 链接+文本列表模板 ](https://bot.q.qq.com/wiki/develop/api/openapi/message/template/template_23.html)为例
 
 ```python
-send_ark = Ark.LinkWithText("描述", "提示信息", [["纯文本1"], ["纯文本2"], ["链接文本1", "http://baidu.com"], ["链接文本2", "http://google.com"]])
+send_ark = Ark.LinkWithText("描述", "提示信息",
+                            [["纯文本1"], ["纯文本2"], ["链接文本1", "http://baidu.com"], ["链接文本2", "http://google.com"]])
 
-bot.api_send_reply_message(channel_id, message_id, ark=send_ark)
+bot._api_send_reply_message(channel_id, message_id, ark=send_ark)
 ```
 
 
@@ -123,7 +125,7 @@ bot.api_send_reply_message(channel_id, message_id, ark=send_ark)
 | FUNC_CALL_AFTER_BOT_LOAD | 初始化后的BotAPP类(self) | 当Bot初始化完成后, 会立刻执行这些函数 |
 | AT_MESSAGE_CREATE        | Message                  | 收到艾特消息                          |
 | MESSAGE_CREATE           | Message                  | 收到消息(仅私域机器人可用)            |
-| DIRECT_MESSAGE_CREATE    | 暂不支持                 | 收到私聊消息                          |
+| DIRECT_MESSAGE_CREATE    | Message                  | 收到私聊消息                          |
 | GUILD_CREATE             | Guild                    | bot加入频道                           |
 | GUILD_UPDATE             | Guild                    | 频道信息更新                          |
 | GUILD_DELETE             | Guild                    | 频道解散/bot被移除                    |
@@ -169,7 +171,9 @@ def get_at_message(event: bot_api.structs.MessageReaction):  # 函数参数类�
 - 初始化Bot实例后, 输入`bot.api_`, 即可根据代码补全进行使用
 
 ```python
-api_send_message()  # 发送消息
+api_send_message()  # 发送频道消息
+api_send_private_message()  # 发送私聊消息
+api_reply_message()  # 回复消息(频道/私聊)
 api_mute_guild()  # 全频道禁言
 api_mute_member()  # 指定用户禁言
 api_get_self_guilds()  # 获取Bot加入的频道列表
