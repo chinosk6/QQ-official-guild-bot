@@ -61,7 +61,7 @@ class Codes:
 
 class User(BaseModel):  # 用户对象
     id: str
-    username: str
+    username: t.Optional[str]
     avatar: t.Optional[str]
     bot: t.Optional[bool]
     union_openid: t.Optional[str]
@@ -71,8 +71,8 @@ class User(BaseModel):  # 用户对象
 class Member(BaseModel):
     user: t.Optional[User]
     nick: t.Optional[str]
-    roles: t.List[str]
-    joined_at: str
+    roles: t.Optional[t.List[str]]
+    joined_at: t.Optional[str]
     deaf: t.Optional[bool]
     mute: t.Optional[bool]
     pending: t.Optional[bool]
