@@ -34,24 +34,27 @@ class BotApi(BotLogger):
         if self.raise_api_error:
             raise models.BotCallingAPIError(error_response, error_message)
 
-    def _tlogger(self, msg: str, debug=False, warning=False, error=False, error_resp=None):
-        super().logger(msg=msg, debug=debug, warning=warning, error=error)
+    def _tlogger(self, msg: str, debug=False, warning=False, error=False, error_resp=None, traceid=None):
+        smsg = f"{msg}\nX-Tps-trace-ID: {traceid}\n" if traceid is not None else msg
+        super().logger(msg=smsg, debug=debug, warning=warning, error=error)
         if error_resp is not None and error:
-            self._throwerr(error_response=error_resp, error_message=msg)
+            self._throwerr(error_response=error_resp, error_message=smsg)
 
-    def _retter(self, get_response: str, wrong_text: str, data_model, retstr: bool, data_type=0):
+    def _retter(self, response: requests.Response, wrong_text: str, data_model, retstr: bool, data_type=0):
         """
         返回器
-        :param get_response: api返回值
+        :param response: api返回值
         :param wrong_text: 错误信息
         :param data_model: pydantic_model信息
         :param retstr: 是否强制返回纯文本
         :param data_type: pydantic_model类型: 0-str, 1-List
         :return:
         """
+        get_response = response.text
+        trace_id = response.headers.get("X-Tps-trace-ID")
         data = json.loads(get_response)
         if "code" in data:
-            self._tlogger(f"{wrong_text}: {get_response}", error=True, error_resp=get_response)
+            self._tlogger(f"{wrong_text}: {get_response}", error=True, error_resp=get_response, traceid=trace_id)
             # if retstr:
             return get_response
             # return None
@@ -67,7 +70,7 @@ class BotApi(BotLogger):
                     return get_response
             except Exception as sb:
                 self._tlogger("请求转换为 Basemodel 失败, 将原样返回", error=True)
-                self._tlogger(f"请求原文: {get_response}", debug=True)
+                self._tlogger(f"请求原文: {get_response}", debug=True, traceid=trace_id)
                 print(sb)
                 return get_response
         else:
@@ -99,7 +102,6 @@ class BotApi(BotLogger):
         else:
             self.logger("reply_message() - 无法识别传入的event", error=True)
             return None
-
 
     def api_send_message(self, channel_id, msg_id="", content="", image_url="", retstr=False,
                          embed=None, ark=None, others_parameter: t.Optional[t.Dict] = None) \
@@ -194,7 +196,7 @@ class BotApi(BotLogger):
         else:
             return response.text
         """
-        return self._retter(response.text, "发送信息失败", structs.Message, retstr)
+        return self._retter(response, "发送信息失败", structs.Message, retstr)
 
     def api_mute_guild(self, guild_id, mute_seconds="", mute_end_timestamp=""):
         """
@@ -210,7 +212,8 @@ class BotApi(BotLogger):
         response = requests.request("PATCH", url, data=json.dumps(_body), headers=self.__headers)
         if response.status_code != 204:
             data = response.text
-            self._tlogger(f"禁言频道失败: {data}", error=True, error_resp=data)
+            self._tlogger(f"禁言频道失败: {data}", error=True, error_resp=data,
+                          traceid=response.headers.get("X-Tps-trace-ID"))
             return data
         else:
             return ""
@@ -230,7 +233,8 @@ class BotApi(BotLogger):
         response = requests.request("PATCH", url, data=json.dumps(_body), headers=self.__headers)
         if response.status_code != 204:
             data = response.text
-            self._tlogger(f"禁言成员失败: {data}", error=True, error_resp=data)
+            self._tlogger(f"禁言成员失败: {data}", error=True, error_resp=data,
+                          traceid=response.headers.get("X-Tps-trace-ID"))
             return data
         else:
             return ""
@@ -244,7 +248,7 @@ class BotApi(BotLogger):
         """
         url = f"{self.base_api}/guilds/{guild_id}/roles"
         response = requests.request("GET", url, headers=self.__headers)
-        return self._retter(response.text, "获取频道身份组列表失败", structs.RetModel.GetGuildRole, retstr, data_type=0)
+        return self._retter(response, "获取频道身份组列表失败", structs.RetModel.GetGuildRole, retstr, data_type=0)
 
     def api_guild_role_create(self, guild_id, name="", color=-1, hoist=1, retstr=False) \
             -> t.Union[str, structs.RetModel.CreateGuildRole]:
@@ -259,7 +263,7 @@ class BotApi(BotLogger):
         url = f"{self.base_api}/guilds/{guild_id}/roles"
         body = models.role_body(name, color, hoist)
         response = requests.request("POST", url, data=json.dumps(body), headers=self.__headers)
-        return self._retter(response.text, "创建频道身份组失败", structs.RetModel.CreateGuildRole, retstr, data_type=0)
+        return self._retter(response, "创建频道身份组失败", structs.RetModel.CreateGuildRole, retstr, data_type=0)
 
     def api_guild_role_change(self, guild_id, role_id, name="", color=-1, hoist=1, retstr=False) \
             -> t.Union[str, structs.RetModel.ChangeGuildRole]:
@@ -275,7 +279,7 @@ class BotApi(BotLogger):
         url = f"{self.base_api}/guilds/{guild_id}/roles/{role_id}"
         body = models.role_body(name, color, hoist)
         response = requests.request("PATCH", url, data=json.dumps(body), headers=self.__headers)
-        return self._retter(response.text, "修改频道身份组失败", structs.RetModel.ChangeGuildRole, retstr, data_type=0)
+        return self._retter(response, "修改频道身份组失败", structs.RetModel.ChangeGuildRole, retstr, data_type=0)
 
     def api_guild_role_remove(self, guild_id, role_id):
         """
@@ -287,7 +291,8 @@ class BotApi(BotLogger):
         url = f"{self.base_api}/guilds/{guild_id}/roles/{role_id}"
         response = requests.request("DELETE", url, headers=self.__headers)
         if response.status_code != 204:
-            self._tlogger(f"删除频道身份组失败: {response.text}", error=True, error_resp=response.text)
+            self._tlogger(f"删除频道身份组失败: {response.text}", error=True, error_resp=response.text,
+                          traceid=response.headers.get("X-Tps-trace-ID"))
             return response.text
         else:
             return ""
@@ -327,7 +332,7 @@ class BotApi(BotLogger):
         url = f"{self.base_api}/guilds/{guild_id}/announces"
         body = {"message_id": message_id, "channel_id": channel_id}
         response = requests.request("POST", url, data=json.dumps(body), headers=self.__headers)
-        return self._retter(response.text, "创建频道全局公告失败", structs.Announces, retstr, data_type=0)
+        return self._retter(response, "创建频道全局公告失败", structs.Announces, retstr, data_type=0)
 
     def api_announces_global_remove(self, guild_id, message_id="all"):
         """
@@ -339,7 +344,8 @@ class BotApi(BotLogger):
         url = f"{self.base_api}/guilds/{guild_id}/announces/{message_id}"
         response = requests.request("DELETE", url, headers=self.__headers)
         if response.status_code != 204:
-            self._tlogger(f"删除频道全局公告失败: {response.text}", error_resp=response.text)
+            self._tlogger(f"删除频道全局公告失败: {response.text}", error_resp=response.text,
+                          traceid=response.headers.get("X-Tps-trace-ID"))
             return response.text
         else:
             return ""
@@ -356,7 +362,7 @@ class BotApi(BotLogger):
         url = f"{self.base_api}/channels/{channel_id}/announces"
         body = {"message_id": message_id}
         response = requests.request("POST", url, data=json.dumps(body), headers=self.__headers)
-        return self._retter(response.text, "创建子频道公告失败", structs.Announces, retstr, data_type=0)
+        return self._retter(response, "创建子频道公告失败", structs.Announces, retstr, data_type=0)
 
     def api_announces_channel_remove(self, channel_id, message_id="all"):
         """
@@ -368,7 +374,8 @@ class BotApi(BotLogger):
         url = f"{self.base_api}/channels/{channel_id}/announces/{message_id}"
         response = requests.request("DELETE", url, headers=self.__headers)
         if response.status_code != 204:
-            self._tlogger(f"删除频道全局公告失败: {response.text}", error_resp=response.text)
+            self._tlogger(f"删除频道全局公告失败: {response.text}", error_resp=response.text,
+                          traceid=response.headers.get("X-Tps-trace-ID"))
             return response.text
         else:
             return ""
@@ -384,7 +391,7 @@ class BotApi(BotLogger):
         """
         url = f"{self.base_api}/channels/{channel_id}/members/{user_id}/permissions"
         response = requests.request("GET", url, headers=self.__headers)
-        return self._retter(response.text, "获取指定子频道的权限失败", structs.ChannelPermissions, retstr, data_type=0)
+        return self._retter(response, "获取指定子频道的权限失败", structs.ChannelPermissions, retstr, data_type=0)
 
     def api_permissions_change_channel(self, channel_id, user_id, add: str, remove: str, **kwargs):
         """
@@ -404,7 +411,8 @@ class BotApi(BotLogger):
         body = {"add": add, "remove": remove}
         response = requests.request("PUT", url, data=json.dumps(body), headers=self.__headers)
         if response.status_code != 204:
-            self._tlogger(f"{ft}: {response.text}", error_resp=response.text)
+            self._tlogger(f"{ft}: {response.text}", error_resp=response.text,
+                          traceid=response.headers.get("X-Tps-trace-ID"))
             return response.text
         else:
             return ""
@@ -420,7 +428,7 @@ class BotApi(BotLogger):
         """
         url = f"{self.base_api}/channels/{channel_id}/roles/{role_id}/permissions"
         response = requests.request("GET", url, headers=self.__headers)
-        return self._retter(response.text, "获取指定子频道身份组的权限失败", structs.ChannelPermissions, retstr, data_type=0)
+        return self._retter(response, "获取指定子频道身份组的权限失败", structs.ChannelPermissions, retstr, data_type=0)
 
     def api_permissions_change_channel_group(self, channel_id, role_id, add: str, remove: str):
         """
@@ -446,7 +454,8 @@ class BotApi(BotLogger):
         body = models.audio_control(audio_url, status, text)
         response = requests.request("POST", url, data=json.dumps(body), headers=self.__headers)
         if response.text != "{}":
-            self._tlogger(f"音频控制失败: {response.text}", error_resp=response.text)
+            self._tlogger(f"音频控制失败: {response.text}", error_resp=response.text,
+                          traceid=response.headers.get("X-Tps-trace-ID"))
         return response.text
 
     def api_get_self_guilds(self, before="", after="", limit="100", use_cache=False, retstr=False) \
@@ -518,7 +527,7 @@ class BotApi(BotLogger):
         """
         url = f"{self.base_api}/channels/{channel_id}/schedules"
         response = requests.request("GET", url, headers=self.__headers)
-        return self._retter(response.text, "获取日程列表失败", structs.Schedule, retstr, data_type=1)
+        return self._retter(response, "获取日程列表失败", structs.Schedule, retstr, data_type=1)
 
     def api_get_schedule(self, channel_id, schedule_id, retstr=False) -> t.Union[str, structs.Schedule, None]:
         """
@@ -530,7 +539,7 @@ class BotApi(BotLogger):
         """
         url = f"{self.base_api}/channels/{channel_id}/schedules/{schedule_id}"
         response = requests.request("GET", url, headers=self.__headers)
-        return self._retter(response.text, "获取日程信息失败", structs.Schedule, retstr, data_type=0)
+        return self._retter(response, "获取日程信息失败", structs.Schedule, retstr, data_type=0)
 
     def api_schedule_create(self, channel_id, name: str, description: str, start_timestamp: str, end_timestamp: str,
                             jump_channel_id: str, remind_type: str, retstr=False) -> t.Union[str, structs.Schedule,
@@ -551,7 +560,7 @@ class BotApi(BotLogger):
         payload = json.dumps(models.schedule_json(name, description, start_timestamp, end_timestamp,
                                                   jump_channel_id, remind_type))
         response = requests.request("POST", url, headers=self.__headers, data=payload)
-        return self._retter(response.text, "创建日程失败", structs.Schedule, retstr, data_type=0)
+        return self._retter(response, "创建日程失败", structs.Schedule, retstr, data_type=0)
 
     def api_schedule_change(self, channel_id, schedule_id, name: str, description: str, start_timestamp: str,
                             end_timestamp: str, jump_channel_id: str, remind_type: str, retstr=False) \
@@ -573,7 +582,7 @@ class BotApi(BotLogger):
         payload = json.dumps(models.schedule_json(name, description, start_timestamp, end_timestamp,
                                                   jump_channel_id, remind_type))
         response = requests.request("PATCH", url, headers=self.__headers, data=payload)
-        return self._retter(response.text, "修改日程失败", structs.Schedule, retstr, data_type=0)
+        return self._retter(response, "修改日程失败", structs.Schedule, retstr, data_type=0)
 
     def api_schedule_delete(self, channel_id, schedule_id):
         """
@@ -586,7 +595,8 @@ class BotApi(BotLogger):
         response = requests.request("DELETE", url, headers=self.__headers)
         if response.status_code != 204:
             data = response.text
-            self._tlogger(f"日程删除失败: {data}", error_resp=response.text)
+            self._tlogger(f"日程删除失败: {data}", error_resp=response.text,
+                          traceid=response.headers.get("X-Tps-trace-ID"))
             return data
         else:
             return ""
@@ -602,12 +612,13 @@ class BotApi(BotLogger):
         response = requests.request("DELETE", url, headers=self.__headers)
         if response.status_code != 200:
             data = response.text
-            self._tlogger(f"撤回消息失败: {data}", error_resp=response.text)
+            self._tlogger(f"撤回消息失败: {data}", error_resp=response.text,
+                          traceid=response.headers.get("X-Tps-trace-ID"))
             return data
         else:
             return ""
 
-    def api_pv_get_member_list(self, guild_id, retstr=False) -> t.Union[str, t.List[structs.Member], None]:  # TODO 未测试
+    def api_pv_get_member_list(self, guild_id, retstr=False) -> t.Union[str, t.List[structs.Member], None]:
         """
         仅私域机器人可用 - 取频道成员列表
         :param guild_id: 频道ID
@@ -616,20 +627,24 @@ class BotApi(BotLogger):
         """
         url = f"{self.base_api}/guilds/{guild_id}/members"
         response = requests.request("GET", url, headers=self.__headers)
-        return self._retter(response.text, "获取频道成员列表失败", structs.Member, retstr, data_type=1)
+        return self._retter(response, "获取频道成员列表失败", structs.Member, retstr, data_type=1)
 
-    def api_pv_kick_member(self, guild_id, user_id) -> str:
+    def api_pv_kick_member(self, guild_id, user_id, add_blick_list=False) -> str:
         """
         仅私域机器人可用 - 踢出指定成员
         :param guild_id: 频道ID
         :param user_id: 成员ID
+        :param add_blick_list: 将此人加入黑名单
         :return: 成功返回空字符串, 失败返回错误信息
         """
         url = f"{self.base_api}/guilds/{guild_id}/members/{user_id}"
-        response = requests.request("DELETE", url, headers=self.__headers)
-
+        payload = {
+            "add_blacklist": add_blick_list
+        }
+        response = requests.request("DELETE", url, headers=self.__headers, data=payload)
         if response.status_code != 204:
-            self._tlogger(f"移除成员失败: {response.text}", error=True, error_resp=response.text)
+            self._tlogger(f"移除成员失败: {response.text}", error=True, error_resp=response.text,
+                          traceid=response.headers.get("X-Tps-trace-ID"))
             return response.text
         else:
             return ""
@@ -655,7 +670,7 @@ class BotApi(BotLogger):
             "parent_id": channel_parent_id
         }
         response = requests.request("POST", url, data=json.dumps(body_s), headers=self.__headers)
-        return self._retter(response.text, "创建子频道失败", structs.Channel, retstr, data_type=0)
+        return self._retter(response, "创建子频道失败", structs.Channel, retstr, data_type=0)
 
     def api_pv_change_channel(self, channel_id, channel_name: str, channel_type: int,
                               channel_position: int, channel_parent_id: int, retstr=False) \
@@ -678,7 +693,7 @@ class BotApi(BotLogger):
             "parent_id": channel_parent_id
         }
         response = requests.request("PATCH", url, data=json.dumps(body_s), headers=self.__headers)
-        return self._retter(response.text, "修改子频道失败", structs.Channel, retstr, data_type=0)
+        return self._retter(response, "修改子频道失败", structs.Channel, retstr, data_type=0)
 
     def api_pv_delete_channel(self, channel_id):
         """
@@ -689,7 +704,8 @@ class BotApi(BotLogger):
         url = f"{self.base_api}/channels/{channel_id}"
         response = requests.request("DELETE", url, headers=self.__headers)
         if response.status_code != 200 and response.status_code != 204:  # ?
-            self._tlogger(f"删除子频道失败: {response.text}", error_resp=response.text)
+            self._tlogger(f"删除子频道失败: {response.text}", error_resp=response.text,
+                          traceid=response.headers.get("X-Tps-trace-ID"))
             return response.text
         else:
             return ""
@@ -697,27 +713,27 @@ class BotApi(BotLogger):
     def get_guild_info(self, guild_id, retstr=False) -> t.Union[str, structs.Guild, None]:
         url = f"{self.base_api}/guilds/{guild_id}"
         response = requests.request("GET", url, headers=self.__headers)
-        return self._retter(response.text, "获取频道信息失败", structs.Guild, retstr, data_type=0)
+        return self._retter(response, "获取频道信息失败", structs.Guild, retstr, data_type=0)
 
     def get_guild_user_info(self, guild_id, member_id, retstr=False) -> t.Union[str, structs.Member, None]:
         url = f"{self.base_api}/guilds/{guild_id}/members/{member_id}"
         response = requests.request("GET", url, headers=self.__headers)
-        return self._retter(response.text, "获取成员信息失败", structs.Member, retstr, data_type=0)
+        return self._retter(response, "获取成员信息失败", structs.Member, retstr, data_type=0)
 
     def get_channel_info(self, channel_id, retstr=False) -> t.Union[str, structs.Channel, None]:
         url = f"{self.base_api}/channels/{channel_id}"
         response = requests.request("GET", url, headers=self.__headers)
-        return self._retter(response.text, "获取子频道信息失败", structs.Channel, retstr, data_type=0)
+        return self._retter(response, "获取子频道信息失败", structs.Channel, retstr, data_type=0)
 
     def get_guild_channel_list(self, guild_id, retstr=False) -> t.Union[str, t.List[structs.Channel], None]:
         url = f"{self.base_api}/guilds/{guild_id}/channels"
         response = requests.request("GET", url, headers=self.__headers)
-        return self._retter(response.text, "获取子频道列表失败", structs.Channel, retstr, data_type=1)
+        return self._retter(response, "获取子频道列表失败", structs.Channel, retstr, data_type=1)
 
     def get_message(self, channel_id, message_id, retstr=False) -> t.Union[str, structs.Message, None]:
         url = f"{self.base_api}/channels/{channel_id}/messages/{message_id}"
         response = requests.request("GET", url, headers=self.__headers)
-        return self._retter(response.text, "获取消息信息失败", structs.Message, retstr, data_type=0)
+        return self._retter(response, "获取消息信息失败", structs.Message, retstr, data_type=0)
 
     def get_self_info(self, use_cache=False) -> t.Union[str, structs.User, None]:
         if use_cache and "self_info" in self._cache:
@@ -742,6 +758,7 @@ class BotApi(BotLogger):
             -> t.Union[str, t.List[structs.Guild], None]:
         if use_cache and "get_self_guilds" in self._cache:
             get_response = self._cache["get_self_guilds"]
+            x_trace_id = None
         else:
             if after != "":
                 url = f"{self.base_api}/users/@me/guilds?after={after}&limit={limit}"
@@ -751,11 +768,12 @@ class BotApi(BotLogger):
                 url = f"{self.base_api}/users/@me/guilds?limit={limit}"
             response = requests.request("GET", url, headers=self.__headers)
             get_response = response.text
+            x_trace_id = response.headers.get("X-Tps-trace-ID")
             self._cache["get_self_guilds"] = response.text
 
         data = json.loads(get_response)
         if "code" in data:
-            self._tlogger(f"获取频道列表失败: {get_response}", error=True, error_resp=get_response)
+            self._tlogger(f"获取频道列表失败: {get_response}", error=True, error_resp=get_response, traceid=x_trace_id)
             if retstr:
                 return get_response
             return None
@@ -771,7 +789,7 @@ class BotApi(BotLogger):
                                     headers=self.__headers)
         if response.status_code != 204:
             self._tlogger(f"{'增加' if request_function == 'PUT' else '删除'}频道身份组成员失败: {response.text}", error=True,
-                          error_resp=response.text)
+                          error_resp=response.text, traceid=response.headers.get("X-Tps-trace-ID"))
             return response.text
         else:
             return ""

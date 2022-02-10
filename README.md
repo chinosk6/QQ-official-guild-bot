@@ -26,20 +26,20 @@ def get_at_message(chain: bot_api.structs.Message):  # 注册一个艾特消息�
                f"内用户: {chain.author.username}({chain.author.id}) 的消息: {chain.content} ({chain.id})")
 
     if "你好" in chain.content:
-        bot._api_send_reply_message(chain.channel_id, chain.id, "hello world!")
+        bot.api_send_message(chain.channel_id, chain.id, "hello world!")
     elif "test" in chain.content:
-        bot._api_send_reply_message(chain.channel_id, chain.id, "chieri在哟~")
+        bot.api_send_message(chain.channel_id, chain.id, "chieri在哟~")
     elif "/echo" in chain.content:
         reply = chain.content[chain.content.find("/echo") + len("/echo"):].strip()
-        bot._api_send_reply_message(chain.channel_id, chain.id, reply)
+        bot.api_send_message(chain.channel_id, chain.id, reply)
 
     elif "/embed" in chain.content:  # 发送embed, 需要Ark权限
         send_embed = Embed("标题", ["文本1", "文本2", "文本3"], image_url=None)
-        bot._api_send_reply_message(chain.channel_id, chain.id, embed=send_embed)
+        bot.api_send_message(chain.channel_id, chain.id, embed=send_embed)
 
     elif "/ark" in chain.content:  # 发送ark消息, 需要Ark权限
         send_ark = Ark.LinkWithText("描述", "提示信息", [["纯文本1"], ["纯文本2"], ["链接文本1", "http://baidu.com"]])
-        bot._api_send_reply_message(chain.channel_id, chain.id, ark=send_ark)
+        bot.api_send_message(chain.channel_id, chain.id, ark=send_ark)
 
 
 bot.start()  # 启动bot
@@ -61,13 +61,13 @@ bot.start()  # 启动bot
   - 一般情况下, 您可以:
 
 ```python
-bot._api_send_reply_message(chain.channel_id, chain.id, "这是消息", "http://您的图片")
+bot.api_send_message(chain.channel_id, chain.id, "这是消息", "http://您的图片")
 ```
 
   - 您也可以:
 
 ```python
-bot._api_send_reply_message(chain.channel_id, chain.id, others_parameter={"content": "这是消息", "image": "https://您的图片"})
+bot.api_send_message(chain.channel_id, chain.id, others_parameter={"content": "这是消息", "image": "https://您的图片"})
 ```
 
 
@@ -91,7 +91,7 @@ send_embed = Embed("标题", ["文本1", "文本2", "文本3"], image_url="http:
 "image_url"
 参数可选, 若没有图片, 则不填
 
-bot._api_send_reply_message(channel_id, message_id, embed=send_embed)
+bot.api_send_message(channel_id, message_id, embed=send_embed)
 ```
 
 ### 发送[Ark](https://bot.q.qq.com/wiki/develop/api/openapi/message/message_template.html)消息
@@ -102,7 +102,7 @@ bot._api_send_reply_message(channel_id, message_id, embed=send_embed)
 send_ark = Ark.LinkWithText("描述", "提示信息",
                             [["纯文本1"], ["纯文本2"], ["链接文本1", "http://baidu.com"], ["链接文本2", "http://google.com"]])
 
-bot._api_send_reply_message(channel_id, message_id, ark=send_ark)
+bot.api_send_message(channel_id, message_id, ark=send_ark)
 ```
 
 
