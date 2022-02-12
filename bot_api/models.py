@@ -3,7 +3,7 @@ import json
 
 
 class BotCallingAPIError(Exception):
-    def __init__(self, error_response: str, error_message=""):
+    def __init__(self, error_response: str, error_message="", x_tps_trace_id=None):
         try:
             data = json.loads(error_response)
         except json.JSONDecodeError:
@@ -13,6 +13,7 @@ class BotCallingAPIError(Exception):
         self.error_code: t.Optional[int] = data["code"] if "code" in data else None
         self.error_description: str = data["message"] if "message" in data else str(error_response)
         self.error_message = error_message.replace(error_response, "").strip()
+        self.x_tps_trace_id = x_tps_trace_id
         if self.error_message.endswith(":"):
             self.error_message = self.error_message[:-1]
 

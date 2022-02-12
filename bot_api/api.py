@@ -25,20 +25,21 @@ class BotApi(BotLogger):
 
         self._cache = {}
 
-    def _throwerr(self, error_response: str, error_message=""):
+    def _throwerr(self, error_response: str, error_message="", trace_id=None):
         """
         抛出API异常
         :param error_response: API返回信息
         :param error_message: 自定义描述
+        :param trace_id: X-TPS-TRACE-ID
         """
         if self.raise_api_error:
-            raise models.BotCallingAPIError(error_response, error_message)
+            raise models.BotCallingAPIError(error_response, error_message, x_tps_trace_id=trace_id)
 
     def _tlogger(self, msg: str, debug=False, warning=False, error=False, error_resp=None, traceid=None):
         smsg = f"{msg}\nX-Tps-trace-ID: {traceid}\n" if traceid is not None else msg
         super().logger(msg=smsg, debug=debug, warning=warning, error=error)
         if error_resp is not None and error:
-            self._throwerr(error_response=error_resp, error_message=smsg)
+            self._throwerr(error_response=error_resp, error_message=smsg, trace_id=traceid)
 
     def _retter(self, response: requests.Response, wrong_text: str, data_model, retstr: bool, data_type=0):
         """
@@ -641,7 +642,7 @@ class BotApi(BotLogger):
         payload = {
             "add_blacklist": add_blick_list
         }
-        response = requests.request("DELETE", url, headers=self.__headers, data=payload)
+        response = requests.request("DELETE", url, headers=self.__headers, data=json.dumps(payload))
         if response.status_code != 204:
             self._tlogger(f"移除成员失败: {response.text}", error=True, error_resp=response.text,
                           traceid=response.headers.get("X-Tps-trace-ID"))

@@ -89,13 +89,13 @@ class MessageAttachment(BaseModel):
 
 
 class MessageEmbedField(BaseModel):
-    name: str
-    value: str
+    name: t.Optional[str]
+    value: t.Optional[str]
 
 
 class MessageEmbed(BaseModel):
-    title: str
-    description: str
+    title: t.Optional[str]
+    description: t.Optional[str]
     prompt: t.Optional[str]
     timestamp: t.Optional[str]
     fields: t.List[MessageEmbedField]
@@ -125,7 +125,7 @@ class Message(BaseModel):  # 消息对象
     id: str  # 消息id
     channel_id: str
     guild_id: str
-    content: str
+    content: t.Optional[str]
     timestamp: str
     edited_timestamp: t.Optional[str]
     mention_everyone: t.Optional[bool]
