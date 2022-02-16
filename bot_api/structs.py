@@ -261,3 +261,23 @@ class RetModel:
         guild_id: str
         role_id: str
         role: Role
+
+
+class APIPermission(BaseModel):
+    path: str
+    method: str
+    desc: str
+    auth_status: int
+
+
+class APIPermissionDemandIdentify(BaseModel):
+    path: str
+    method: str
+
+
+class APIPermissionDemand(BaseModel):
+    guild_id: str
+    channel_id: str
+    api_identify: APIPermissionDemandIdentify
+    title: str
+    desc: str

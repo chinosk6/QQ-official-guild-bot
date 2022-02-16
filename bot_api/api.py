@@ -78,7 +78,7 @@ class BotApi(BotLogger):
             return get_response
 
     def api_reply_message(self, event: structs.Message, content="", image_url="", retstr=False,
-                          embed=None, ark=None, others_parameter: t.Optional[t.Dict] = None) \
+                          embed=None, ark=None, others_parameter: t.Optional[t.Dict] = None, at_user=True) \
             -> t.Union[str, structs.Message, None]:
         """
         快速回复消息, 支持频道消息/私聊消息
@@ -89,8 +89,12 @@ class BotApi(BotLogger):
         :param embed: embed消息, 可空
         :param ark: ark消息, 可空
         :param others_parameter: 其它自定义字段
+        :param at_user: 艾特被回复着
         """
         event_type = event.message_type_sdk
+        if at_user:
+            if "<@" not in content and event_type != "private":
+                content = f"<@{event.author.id}>\n{content}"
 
         if event_type == "guild":
             return self.api_send_message(channel_id=event.channel_id, msg_id=event.id, content=content,
@@ -618,6 +622,40 @@ class BotApi(BotLogger):
             return data
         else:
             return ""
+
+    def api_get_api_permission(self, guild_id, retstr=False):
+        """
+        获取频道可用权限列表
+        :param guild_id: 频道ID
+        :param retstr: 强制返回文本
+        :return: 频道权限列表
+        """
+        url = f"{self.base_api}/guilds/{guild_id}/api_permission"
+        response = requests.request("GET", url)
+        return self._retter(response, "获取频道可用权限列表失败", structs.APIPermission, retstr, data_type=1)
+
+    def api_demand_api_permission(self, guild_id, channel_id: str, path: str, method: str, desc: str, retstr=False):
+        """
+        创建频道 API 接口权限授权链接
+        :param guild_id: 频道ID
+        :param channel_id: 子频道ID
+        :param path: API 接口名，例如 /guilds/{guild_id}/members/{user_id}
+        :param method: 请求方法，例如 GET
+        :param desc: 机器人申请对应的 API 接口权限后可以使用功能的描述
+        :param retstr: 强制返回文本
+        :return: 接口权限需求对象
+        """
+        url = f"{self.base_api}/guilds/{guild_id}/api_permission/demand"
+        payload = {
+            "channel_id": channel_id,
+            "api_identify": {
+                "path": path,
+                "method": method
+            },
+            "desc": desc
+        }
+        response = requests.request("POST", url, data=json.dumps(payload))
+        return self._retter(response, "创建授权链接失败", structs.APIPermissionDemand, retstr, data_type=0)
 
     def api_pv_get_member_list(self, guild_id, retstr=False) -> t.Union[str, t.List[structs.Member], None]:
         """

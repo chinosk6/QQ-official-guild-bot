@@ -31,7 +31,7 @@ def on_new_thread(f):
 class BotApp(inter.BotMessageDistributor):
     def __init__(self, appid: int, token: str, secret: str, is_sandbox: bool, inters: t.List,
                  debug=False, api_return_pydantic=False, ignore_at_self=False, output_log=True, log_path="",
-                 raise_api_error=False):
+                 raise_api_error=False, call_on_load_event_every_reconnect=False):
         """
         BotAPP
         :param appid: BotAPPId
@@ -45,6 +45,7 @@ class BotApp(inter.BotMessageDistributor):
         :param output_log: 是否输出日志到本地
         :param log_path: 日志输出位置, 默认为sdk目录内log文件夹
         :param raise_api_error: 当API调用出错时, 抛出 BotCallingAPIError 异常
+        :param call_on_load_event_every_reconnect: 每次触发重连都调用 FUNC_CALL_AFTER_BOT_LOAD 事件
         """
         super().__init__(appid=appid, token=token, secret=secret, sandbox=is_sandbox, debug=debug,
                          api_return_pydantic=api_return_pydantic, output_log=output_log, log_path=log_path,
@@ -59,6 +60,8 @@ class BotApp(inter.BotMessageDistributor):
         self._t = None
         self.heartbeat_time = -1  # 心跳间隔
         self.ws = None
+        self._on_load_run = False
+        self.call_on_load_event_every_reconnect = call_on_load_event_every_reconnect
         self._spath = os.path.split(__file__)[0]
 
     # @on_new_thread
@@ -151,7 +154,8 @@ class BotApp(inter.BotMessageDistributor):
                     elif s_type in self.known_events:
                         s_dantic = self.known_events[s_type][1]
                         if s_dantic is not None:
-                            if s_type in [event_types.AT_MESSAGE_CREATE, event_types.MESSAGE_CREATE]:
+                            if s_type in [event_types.AT_MESSAGE_CREATE, event_types.MESSAGE_CREATE,
+                                          event_types.DIRECT_MESSAGE_CREATE]:
                                 if self.ignore_at_self:
                                     data["d"]["content"] = data["d"]["content"].replace(f"<@!{self.self_id}>",
                                                                                         "").strip()
@@ -201,7 +205,8 @@ class BotApp(inter.BotMessageDistributor):
             self.self_name = botname
             self.logger(f"开始运行:\nBotID: {botid}\nBotName: {botname}\nbot: {isbot}")
             self._check_files()
-            self._event_handout(BCd.SeverCode.FUNC_CALL_AFTER_BOT_LOAD, self)
+            if not self._on_load_run or self.call_on_load_event_every_reconnect:
+                self._event_handout(BCd.SeverCode.FUNC_CALL_AFTER_BOT_LOAD, self)
         else:
             self.logger("开始尝试连接")
 

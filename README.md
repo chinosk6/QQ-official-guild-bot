@@ -7,7 +7,6 @@
 # 直接使用SDK
 
 - 参考`bot_main.py`
-- 没有文档, 代码补全很完善了
 
 ```python
 import bot_api
@@ -204,6 +203,8 @@ api_permissions_change_channel()  # 修改指定子频道的权限
 api_permissions_get_channel_group()  # 获取指定子频道身份组的权限
 api_permissions_change_channel_group()  # 修改指定子频道身份组的权限
 api_audio_control()  # 音频控制
+api_get_api_permission()  # 获取频道可用权限列表
+api_demand_api_permission()  # 创建频道 API 接口权限授权链接
 
 api_pv_get_member_list()  # 仅私域机器人可用 - 取频道成员列表
 api_pv_kick_member()  # 仅私域机器人可用 - 踢出指定成员
@@ -222,7 +223,7 @@ api_pv_delete_channel()  # 仅私域机器人可用 - 删除子频道
 
 # 作为HTTP API使用
 
-- 一个人同时更新两套SDK显然是非常困难的。因此HTTP API部分的更新进度会慢于SDK本体。欢迎有能之士前来Pr~
+- 一个人同时更新两套SDK显然是非常困难的。~~因此HTTP API部分的更新进度会慢于SDK本体~~(已停更)。欢迎有能之士前来Pr~
 
 - 参考`main.py`
 
