@@ -60,7 +60,7 @@ class BotApp(inter.BotMessageDistributor):
         self._t = None
         self.heartbeat_time = -1  # 心跳间隔
         self.ws = None
-        self._on_load_run = False
+        self._on_load_run = True
         self.call_on_load_event_every_reconnect = call_on_load_event_every_reconnect
         self._spath = os.path.split(__file__)[0]
 
@@ -205,8 +205,9 @@ class BotApp(inter.BotMessageDistributor):
             self.self_name = botname
             self.logger(f"开始运行:\nBotID: {botid}\nBotName: {botname}\nbot: {isbot}")
             self._check_files()
-            if not self._on_load_run or self.call_on_load_event_every_reconnect:
+            if self._on_load_run or self.call_on_load_event_every_reconnect:
                 self._event_handout(BCd.SeverCode.FUNC_CALL_AFTER_BOT_LOAD, self)
+                self._on_load_run = False
         else:
             self.logger("开始尝试连接")
 
@@ -240,6 +241,7 @@ class BotApp(inter.BotMessageDistributor):
                         self.ws.send(json.dumps({"op": 1, "d": self._d}))
                         time.sleep(self.heartbeat_time)
                     else:
+                        time.sleep(1)
                         continue
             except websocket.WebSocketConnectionClosedException:
                 self.logger("发送心跳包失败", error=True)

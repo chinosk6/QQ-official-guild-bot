@@ -151,14 +151,14 @@ class Guild(BaseModel):  # 频道对象
 
 
 class Channel(BaseModel):  # 子频道对象
-    id: str
-    guild_id: str
-    name: str
-    type: int
+    id: t.Optional[str]
+    guild_id: t.Optional[str]
+    name: t.Optional[str]
+    type: t.Optional[int]
     sub_type: t.Optional[int]
-    position: int
-    parent_id: str
-    owner_id: str
+    position: t.Optional[int]
+    parent_id: t.Optional[str]
+    owner_id: t.Optional[str]
     last_message_id: t.Optional[str]
     nsfw: t.Optional[bool]  # 这个字段, 可能为True吗?
     rate_limit_per_user: t.Optional[int]
