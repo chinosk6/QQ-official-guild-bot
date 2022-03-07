@@ -281,3 +281,9 @@ class APIPermissionDemand(BaseModel):
     api_identify: APIPermissionDemandIdentify
     title: str
     desc: str
+
+
+class DMS(BaseModel):
+    guild_id: t.Optional[str]
+    channel_id: t.Optional[str]
+    create_time: t.Optional[str]

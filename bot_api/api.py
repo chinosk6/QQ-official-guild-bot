@@ -143,6 +143,23 @@ class BotApi(BotLogger):
                                             retstr=retstr, embed=embed, ark=ark, others_parameter=others_parameter,
                                             guild_id=guild_id)
 
+    def api_create_dms(self, recipient_id, source_guild_id, retstr=False) -> t.Union[structs.DMS, str]:
+        """
+        创建私信会话
+        :param recipient_id: 接收者 id
+        :param source_guild_id: 源频道 id
+        :param retstr: 强制返回文本
+        :return: DMS对象
+        """
+        url = f"{self.base_api}/users/@me/dms"
+        payload = {
+            "recipient_id": recipient_id,
+            "source_guild_id": source_guild_id
+        }
+        response = requests.request("POST", url, data=json.dumps(payload), headers=self.__headers)
+        return self._retter(response, "创建私信会话失败", structs.DMS, retstr, data_type=0)
+
+
     def api_send_reply_message(self, channel_id, msg_id="", content="", image_url="", retstr=False,
                                embed=None, ark=None, others_parameter: t.Optional[t.Dict] = None) \
             -> t.Union[str, structs.Message, None]:

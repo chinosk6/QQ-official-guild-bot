@@ -146,7 +146,7 @@ class BotApp(inter.BotMessageDistributor):
                         self.session_id = data["d"]["session_id"]
                         self._on_open(data["d"]["user"]["id"], data["d"]["user"]["username"], data["d"]["user"]["bot"],
                                       is_login=True)
-                        self.send_heart_beat(self.ws)
+                        self.send_heart_beat()
 
                     elif s_type == event_types.RESUMED:  # 服务器通知重连
                         self.logger("重连完成, 事件已全部补发")
@@ -230,7 +230,7 @@ class BotApp(inter.BotMessageDistributor):
         else:
             self.logger("连接已断开", warning=True)
 
-    def send_heart_beat(self, ws):
+    def send_heart_beat(self):
 
         def _send_heart_beat():
             try:
