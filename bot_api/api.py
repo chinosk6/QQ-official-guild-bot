@@ -341,24 +341,39 @@ class BotApi(BotLogger):
         """
         return self._request_guild_role_member(guild_id, role_id, user_id, channel_id, "DELETE")
 
-    def api_announces_global_create(self, guild_id, message_id: str, channel_id: str, retstr=False) \
+    def api_announces_create(self, guild_id, message_id=None, channel_id=None, announces_type=None,
+                             recommend_channels=None, retstr=False) \
             -> t.Union[str, structs.Announces]:
         """
-        创建频道全局公告
+        创建频道公告
         :param guild_id: 频道ID
-        :param message_id: 设为公告的消息ID
-        :param channel_id: 子频道ID
+        :param message_id: 选填，消息 id，message_id 有值则优选将某条消息设置为成员公告
+        :param channel_id: 选填，子频道 id，message_id 有值则为必填。
+        :param announces_type: 选填，公告类别 0:成员公告，1:欢迎公告，默认为成员公告
+        :param recommend_channels: 选填，推荐子频道列表，会一次全部替换推荐子频道列表, 填写格式: [[子频道id, 推荐语], [子频道id, 推荐语], ...]
         :param retstr: 强制返回纯文本
         :return: Announces
         """
         url = f"{self.base_api}/guilds/{guild_id}/announces"
-        body = {"message_id": message_id, "channel_id": channel_id}
+        body = {}
+        if message_id is not None:
+            body["message_id"] = message_id
+        if channel_id is not None:
+            body["channel_id"] = channel_id
+        if announces_type is not None:
+            body["announces_type"] = announces_type
+        if recommend_channels is not None:
+            tl = []
+            for channel_id, introduce in recommend_channels:
+                tl.append({"channel_id": channel_id, "introduce": introduce})
+            body[recommend_channels] = tl
+
         response = requests.request("POST", url, data=json.dumps(body), headers=self.__headers)
-        return self._retter(response, "创建频道全局公告失败", structs.Announces, retstr, data_type=0)
+        return self._retter(response, "创建频道公告失败", structs.Announces, retstr, data_type=0)
 
     def api_announces_global_remove(self, guild_id, message_id="all"):
         """
-        删除频道全局公告
+        删除频道公告
         :param guild_id: 频道ID
         :param message_id: 消息ID. message_id 有值时，会校验 message_id 合法性，若不校验 message_id，请将 message_id 设置为 all
         :return: 成功返回空字符串, 失败返回错误信息
@@ -366,37 +381,7 @@ class BotApi(BotLogger):
         url = f"{self.base_api}/guilds/{guild_id}/announces/{message_id}"
         response = requests.request("DELETE", url, headers=self.__headers)
         if response.status_code != 204:
-            self._tlogger(f"删除频道全局公告失败: {response.text}", error_resp=response.text,
-                          traceid=response.headers.get("X-Tps-trace-ID"))
-            return response.text
-        else:
-            return ""
-
-    def api_announces_channel_create(self, channel_id: str, message_id: str, retstr=False) \
-            -> t.Union[str, structs.Announces]:
-        """
-        创建子频道公告
-        :param channel_id: 子频道ID
-        :param message_id: 设为公告的消息ID
-        :param retstr: 强制返回纯文本
-        :return: Announces
-        """
-        url = f"{self.base_api}/channels/{channel_id}/announces"
-        body = {"message_id": message_id}
-        response = requests.request("POST", url, data=json.dumps(body), headers=self.__headers)
-        return self._retter(response, "创建子频道公告失败", structs.Announces, retstr, data_type=0)
-
-    def api_announces_channel_remove(self, channel_id, message_id="all"):
-        """
-        删除子频道公告
-        :param channel_id: 子频道ID
-        :param message_id: 消息ID. message_id 有值时，会校验 message_id 合法性，若不校验 message_id，请将 message_id 设置为 all
-        :return: 成功返回空字符串, 失败返回错误信息
-        """
-        url = f"{self.base_api}/channels/{channel_id}/announces/{message_id}"
-        response = requests.request("DELETE", url, headers=self.__headers)
-        if response.status_code != 204:
-            self._tlogger(f"删除频道全局公告失败: {response.text}", error_resp=response.text,
+            self._tlogger(f"删除频道公告失败: {response.text}", error_resp=response.text,
                           traceid=response.headers.get("X-Tps-trace-ID"))
             return response.text
         else:
@@ -640,7 +625,7 @@ class BotApi(BotLogger):
         else:
             return ""
 
-    def api_get_api_permission(self, guild_id, retstr=False):
+    def api_get_api_permission(self, guild_id, retstr=False) -> t.Union[structs.APIPermission, str]:
         """
         获取频道可用权限列表
         :param guild_id: 频道ID
@@ -651,7 +636,8 @@ class BotApi(BotLogger):
         response = requests.request("GET", url)
         return self._retter(response, "获取频道可用权限列表失败", structs.APIPermission, retstr, data_type=1)
 
-    def api_demand_api_permission(self, guild_id, channel_id: str, path: str, method: str, desc: str, retstr=False):
+    def api_demand_api_permission(self, guild_id, channel_id: str, path: str, method: str, desc: str, retstr=False)\
+            -> t.Union[structs.APIPermissionDemand, str]:
         """
         创建频道 API 接口权限授权链接
         :param guild_id: 频道ID
@@ -673,6 +659,64 @@ class BotApi(BotLogger):
         }
         response = requests.request("POST", url, data=json.dumps(payload))
         return self._retter(response, "创建授权链接失败", structs.APIPermissionDemand, retstr, data_type=0)
+
+    def api_add_pins(self, channel_id, message_id, retstr=False) -> t.Union[structs.PinsMessage, str]:
+        """
+        添加精华消息
+        :param channel_id: 子频道ID
+        :param message_id: 消息ID
+        :param retstr: 强制返回str
+        :return:
+        """
+        url = f"{self.base_api}/channels/{channel_id}/pins/{message_id}"
+        response = requests.request("PUT", url)
+        return self._retter(response, "添加精华消息失败", structs.PinsMessage, retstr, data_type=0)
+
+    def api_remove_pins(self, channel_id, message_id, retstr=False):
+        """
+        移除精华消息
+        :param channel_id: 子频道ID
+        :param message_id: 消息ID, 删除全部填入: all
+        :param retstr: 强制返回str
+        :return:
+        """
+        url = f"{self.base_api}/channels/{channel_id}/pins/{message_id}"
+        response = requests.request("DELETE", url)
+        if response.status_code != 204:
+            self._tlogger(f"移除精华消息失败: {response.text}", error=True, error_resp=response.text,
+                          traceid=response.headers.get("X-Tps-trace-ID"))
+            return response.text
+        else:
+            return ""
+
+    def api_get_pins(self, channel_id, retstr=False) -> t.Union[structs.PinsMessage, str]:
+        """
+        获取精华消息
+        :param channel_id: 子频道ID
+        :param retstr: 强制返回str
+        :return:
+        """
+        url = f"{self.base_api}/channels/{channel_id}/pins"
+        response = requests.request("GET", url)
+        return self._retter(response, "获取精华消息失败", structs.PinsMessage, retstr, data_type=0)
+
+    def api_send_message_reactions(self, channel_id, message_id, emoji_type, emoji_id):
+        """
+        发表表情表态
+        :param channel_id: 子频道ID
+        :param message_id: 消息ID
+        :param emoji_type: 表情类型, 参考: https://bot.q.qq.com/wiki/develop/api/openapi/emoji/model.html#emojitype
+        :param emoji_id: 表情列表, 参考: https://bot.q.qq.com/wiki/develop/api/openapi/emoji/model.html#Emoji%20%E5%88%97%E8%A1%A8
+        :return: 成功返回空字符串
+        """
+        url = f"{self.base_api}/channels/{channel_id}/messages/{message_id}/reactions/{emoji_type}/{emoji_id}"
+        response = requests.request("PUT", url)
+        if response.status_code != 204:
+            self._tlogger(f"发送表情表态失败: {response.text}", error=True, error_resp=response.text,
+                          traceid=response.headers.get("X-Tps-trace-ID"))
+            return response.text
+        else:
+            return ""
 
     def api_pv_get_member_list(self, guild_id, retstr=False) -> t.Union[str, t.List[structs.Member], None]:
         """

@@ -161,6 +161,10 @@ class Channel(BaseModel):  # 子频道对象
     owner_id: t.Optional[str]
     last_message_id: t.Optional[str]
     nsfw: t.Optional[bool]  # 这个字段, 可能为True吗?
+    private_type: t.Optional[int]
+    speak_permission: t.Optional[int]
+    application_id: t.Optional[str]
+    permissions: t.Optional[str]
     rate_limit_per_user: t.Optional[int]
 
 
@@ -234,10 +238,16 @@ class MessageAudited(BaseModel):  # 消息审核对象
     create_time: str
 
 
+class RecommendChannel(BaseModel):
+    channel_id: t.Optional[str]
+    introduce: t.Optional[str]
+
 class Announces(BaseModel):  # 公告
     guild_id: str
     channel_id: str
     message_id: str
+    announces_type: t.Optional[int]
+    recommend_channels: t.Optional[RecommendChannel]
 
 
 class ChannelPermissions(BaseModel):  # 子频道权限对象
@@ -287,3 +297,8 @@ class DMS(BaseModel):
     guild_id: t.Optional[str]
     channel_id: t.Optional[str]
     create_time: t.Optional[str]
+
+class PinsMessage(BaseModel):
+    guild_id: t.Optional[str]
+    channel_id: t.Optional[str]
+    message_ids: t.Optional[t.List[str]]
