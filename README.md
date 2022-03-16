@@ -171,6 +171,7 @@ def get_at_message(event: bot_api.structs.MessageReaction):  # 函数参数类�
 
 ```python
 api_send_message()  # 发送频道消息
+api_create_dms()  # 创建私信会话
 api_send_private_message()  # 发送私聊消息
 api_reply_message()  # 回复消息(频道/私聊)
 api_mute_guild()  # 全频道禁言
@@ -194,10 +195,8 @@ api_guild_role_change()  # 修改频道身份组
 api_guild_role_remove()  # 删除频道身份组
 api_guild_role_member_add()  # 增加频道身份组成员
 api_guild_role_member_remove()  # 移除频道身份组成员
-api_announces_global_create()  # 创建频道全局公告
-api_announces_global_remove()  # 删除频道全局公告
-api_announces_channel_create()  # 创建子频道公告
-api_announces_channel_remove()  # 删除子频道公告
+api_announces_create()  # 创建频道公告
+api_announces_remove()  # 删除频道公告
 api_permissions_get_channel()  # 获取指定子频道的权限
 api_permissions_change_channel()  # 修改指定子频道的权限
 api_permissions_get_channel_group()  # 获取指定子频道身份组的权限
@@ -205,6 +204,10 @@ api_permissions_change_channel_group()  # 修改指定子频道身份组的权�
 api_audio_control()  # 音频控制
 api_get_api_permission()  # 获取频道可用权限列表
 api_demand_api_permission()  # 创建频道 API 接口权限授权链接
+api_add_pins()  # 添加精华消息
+api_remove_pins()  # 删除精华消息
+api_get_pins()  # 获取精华消息
+api_send_message_reactions()  # 发送表情表态
 
 api_pv_get_member_list()  # 仅私域机器人可用 - 取频道成员列表
 api_pv_kick_member()  # 仅私域机器人可用 - 踢出指定成员
