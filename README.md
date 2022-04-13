@@ -49,7 +49,7 @@ bot.start()  # 启动bot
 
 ### 自行组合消息
 
-`api_send_reply_message`方法提供了极高的自由度。您可以按照本文档提供的方法发送消息, 也可以使用`others_parameter`参数自行组合。
+`api_send_message`方法提供了极高的自由度。您可以按照本文档提供的方法发送消息, 也可以使用`others_parameter`参数自行组合。
 
 使用`others_parameter`, 您需要按照 [QQ机器人文档 - 发送消息](https://bot.q.qq.com/wiki/develop/api/openapi/message/post_messages.html) 提供的参数发送消息, 若有此SDK没有支持的消息类型, 您依旧可以自行组合参数进行发送。
 
@@ -149,6 +149,9 @@ bot.api_send_message(channel_id, message_id, ark=send_ark)
 | REPLY_DELETE             | 暂不支持                 | 用户回复评论                          |
 | MESSAGE_AUDIT_PASS       | MessageAudited           | 消息审核通过                          |
 | MESSAGE_AUDIT_REJECT     | MessageAudited           | 消息审核不通过                        |
+| PUBLIC_MESSAGE_DELETE    | MessageDelete            | 消息撤回(公域)                        |
+| MESSAGE_DELETE           | MessageDelete            | 消息撤回(私域)                        |
+| DIRECT_MESSAGE_DELETE    | MessageDelete            | 消息撤回(私聊)                        |
 
 
 

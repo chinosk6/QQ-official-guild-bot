@@ -16,6 +16,7 @@ class BotMessageDistributor(api.BotApi):
                              BCd.SeverCode.AT_MESSAGE_CREATE: ["群艾特消息", structs.Message],
                              BCd.SeverCode.DIRECT_MESSAGE_CREATE: ["私聊消息", structs.Message],
                              BCd.SeverCode.MESSAGE_CREATE: ["收到消息(私域)", structs.Message],
+                             BCd.SeverCode.MESSAGE_DELETE: ["消息被撤回(私域)", structs.MessageDelete],
                              BCd.SeverCode.GUILD_CREATE: ["Bot加入频道消息", structs.Guild],
                              BCd.SeverCode.GUILD_UPDATE: ["频道更新", structs.Guild],
                              BCd.SeverCode.GUILD_DELETE: ["频道更新", structs.Guild],
@@ -33,7 +34,9 @@ class BotMessageDistributor(api.BotApi):
                              BCd.SeverCode.MESSAGE_REACTION_REMOVE: ["移除表情表态", structs.MessageReaction],
                              BCd.SeverCode.FUNC_CALL_AFTER_BOT_LOAD: ["Bot载入完成后加载函数", None],
                              BCd.SeverCode.MESSAGE_AUDIT_PASS: ["消息审核通过", structs.MessageAudited],
-                             BCd.SeverCode.MESSAGE_AUDIT_REJECT: ["消息审核不通过", structs.MessageAudited]
+                             BCd.SeverCode.MESSAGE_AUDIT_REJECT: ["消息审核不通过", structs.MessageAudited],
+                             BCd.SeverCode.PUBLIC_MESSAGE_DELETE: ["消息被撤回(公域)", structs.MessageDelete],
+                             BCd.SeverCode.DIRECT_MESSAGE_DELETE: ["消息被撤回(私聊)", structs.MessageDelete]
                              }
 
         self.bot_events: Dict[str, List] = {}

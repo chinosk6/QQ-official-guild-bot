@@ -10,6 +10,7 @@ import os
 
 event_types = BCd.QBot.GatewayEventName
 
+
 class Intents:  # https://bot.q.qq.com/wiki/develop/api/gateway/intents.html
     GUILDS = 1 << 0
     GUILD_MEMBERS = 1 << 1
@@ -21,11 +22,22 @@ class Intents:  # https://bot.q.qq.com/wiki/develop/api/gateway/intents.html
     MESSAGE_CREATE = 1 << 9
     MESSAGE_AUDIT = 1 << 27
 
+
 def on_new_thread(f):
     def task_qwq(*args, **kwargs):
         _t = Thread(target=f, args=args, kwargs=kwargs)
         _t.start()
+
     return (task_qwq)
+
+
+def get_connection(url, on_message, on_open, on_error, on_close):
+    return websocket.WebSocketApp(url=url,
+                                  on_message=on_message,
+                                  on_open=on_open,
+                                  on_error=on_error,
+                                  on_close=on_close
+                                  )
 
 
 class BotApp(inter.BotMessageDistributor):
@@ -67,8 +79,13 @@ class BotApp(inter.BotMessageDistributor):
     # @on_new_thread
     def start(self):
         websocket.enableTrace(False)
-        self.ws = self._get_connection()
-        self.ws.run_forever()
+        while True:
+            self.ws = get_connection(url=self._get_websocket_url(),
+                                     on_message=self._on_message,
+                                     on_open=self._on_open,
+                                     on_error=self._ws_on_error,
+                                     on_close=self._on_close)
+            self.ws.run_forever()
 
     def _get_connection(self):
         ws = websocket.WebSocketApp(url=self._get_websocket_url(),
@@ -187,7 +204,6 @@ class BotApp(inter.BotMessageDistributor):
         except Exception as sb:
             self.logger(sb, error=True)
 
-
     def _event_handout(self, func_type: str, *args, **kwargs):
         if func_type in self.bot_events:
             throw_func = self.bot_events[func_type]
@@ -224,9 +240,16 @@ class BotApp(inter.BotMessageDistributor):
             self.heartbeat_time = -1
             self._d = None
             self.logger("连接断开, 尝试重连", warning=True)
-            self.ws = self._get_connection()
+            self.ws.keep_running = False
+            """
+            self.ws = get_connection(url=self._get_websocket_url(),
+                                     on_message=self._on_message,
+                                     on_open=self._on_open,
+                                     on_error=self._ws_on_error,
+                                     on_close=self._on_close)
             self.ws.run_forever()
             self.ws.send(json.dumps(self._get_verify_body(reconnect=True)))
+            """
         else:
             self.logger("连接已断开", warning=True)
 
@@ -255,7 +278,6 @@ class BotApp(inter.BotMessageDistributor):
                 self._t = Thread(target=_send_heart_beat)
                 self._t.start()
 
-
     def _get_websocket_url(self):
         url = f"{self.base_api}/gateway"
         headers = {'Authorization': f'Bot {self.appid}.{self.token}'}
@@ -266,7 +288,6 @@ class BotApp(inter.BotMessageDistributor):
         except Exception as sb:
             self.logger(f"获取服务器API失败 - {response.text}")
             print(sb)
-
 
     def _get_inters_code(self):
         if type(self.inters) != list:

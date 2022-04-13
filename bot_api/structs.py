@@ -45,6 +45,10 @@ class Codes:
             MESSAGE_AUDIT_PASS = "MESSAGE_AUDIT_PASS"  # 消息审核通过
             MESSAGE_AUDIT_REJECT = "MESSAGE_AUDIT_REJECT"  # 消息审核不通过
 
+            PUBLIC_MESSAGE_DELETE = "PUBLIC_MESSAGE_DELETE"  # 消息撤回(公域)
+            MESSAGE_DELETE = "MESSAGE_DELETE"  # 消息撤回(私域)
+            DIRECT_MESSAGE_DELETE = "DIRECT_MESSAGE_DELETE"  # 消息撤回(私聊)
+
         class UserRole:
             member = "1"  # 全体成员
             admin = "2"  # 管理员
@@ -120,6 +124,9 @@ class MessageArk(BaseModel):
     template_id: int
     kv: t.List[MessageArkKv]
 
+class MessageReference(BaseModel):
+    message_id: str
+    ignore_get_message_error: t.Optional[bool]
 
 class Message(BaseModel):  # 消息对象
     id: str  # 消息id
@@ -135,18 +142,21 @@ class Message(BaseModel):  # 消息对象
     mentions: t.Optional[t.List[User]]
     member: t.Optional[Member]
     ark: t.Optional[MessageArk]
+    seq: t.Optional[int]
+    seq_in_channel: t.Optional[str]
+    message_reference: t.Optional[MessageReference]
     message_type_sdk: t.Optional[str]
 
 
 class Guild(BaseModel):  # 频道对象
-    id: str
-    name: str
+    id: t.Optional[str]  # GUILD_DELETE 事件为 None
+    name: t.Optional[str]  # GUILD_DELETE 事件为 None
     icon: t.Optional[str]
-    owner_id: str
+    owner_id: t.Optional[str]  # GUILD_DELETE 事件为 None
     owner: t.Optional[bool]
-    member_count: int
-    max_members: int
-    description: str
+    member_count: t.Optional[int]  # GUILD_DELETE 事件为 None
+    max_members: t.Optional[int]  # GUILD_DELETE 事件为 None
+    description: t.Optional[str]  # GUILD_DELETE 事件为 None
     joined_at: t.Optional[str]
 
 
@@ -236,6 +246,7 @@ class MessageAudited(BaseModel):  # 消息审核对象
     channel_id: str
     audit_time: str
     create_time: str
+    seq_in_channel: t.Optional[str]
 
 
 class RecommendChannel(BaseModel):
@@ -302,3 +313,17 @@ class PinsMessage(BaseModel):
     guild_id: t.Optional[str]
     channel_id: t.Optional[str]
     message_ids: t.Optional[t.List[str]]
+
+class MessageDelete(BaseModel):
+    class DeletedMessage(BaseModel):
+        author: t.Optional[User]
+        channel_id: t.Optional[str]
+        guild_id: t.Optional[str]
+        id: t.Optional[str]
+        direct_message: t.Optional[bool]
+
+    class OpUser(BaseModel):
+        id: t.Optional[str]
+
+    message: t.Optional[DeletedMessage]
+    op_user: t.Optional[OpUser]
