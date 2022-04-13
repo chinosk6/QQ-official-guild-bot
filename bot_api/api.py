@@ -622,15 +622,19 @@ class BotApi(BotLogger):
         else:
             return ""
 
-    def api_message_recall(self, channel_id, message_id):
+    def api_message_recall(self, channel_id, message_id, hidetip=False):
         """
         撤回消息
         :param channel_id: 频道ID
         :param message_id: 消息ID
+        :param hidetip: 隐藏提示小灰条
         :return: 成功返回空字符串, 失败返回错误信息
         """
         url = f"{self.base_api}/channels/{channel_id}/messages/{message_id}"
-        response = requests.request("DELETE", url, headers=self.__headers)
+        payload = {
+            'hidetip': str(hidetip).lower()
+        }
+        response = requests.request("DELETE", url, headers=self.__headers, params=payload)
         if response.status_code != 200:
             data = response.text
             self._tlogger(f"撤回消息失败: {data}", error_resp=response.text,
@@ -743,17 +747,20 @@ class BotApi(BotLogger):
         response = requests.request("GET", url, headers=self.__headers)
         return self._retter(response, "获取频道成员列表失败", structs.Member, retstr, data_type=1)
 
-    def api_pv_kick_member(self, guild_id, user_id, add_blick_list=False) -> str:
+    def api_pv_kick_member(self, guild_id, user_id, add_blick_list=False, delete_history_msg_days=0) -> str:
         """
         仅私域机器人可用 - 踢出指定成员
+        消息撤回时间范围仅支持固定的天数：3，7，15，30。 特殊的时间范围：-1: 撤回全部消息。默认值为0不撤回任何消息。
         :param guild_id: 频道ID
         :param user_id: 成员ID
-        :param add_blick_list: 将此人加入黑名单
+        :param add_blick_list: 将该成员加入黑名单
+        :param delete_history_msg_days: 撤回该成员的消息
         :return: 成功返回空字符串, 失败返回错误信息
         """
         url = f"{self.base_api}/guilds/{guild_id}/members/{user_id}"
         payload = {
-            "add_blacklist": add_blick_list
+            "add_blacklist": add_blick_list,
+            "delete_history_msg_days": f"{delete_history_msg_days}"
         }
         response = requests.request("DELETE", url, headers=self.__headers, data=json.dumps(payload))
         if response.status_code != 204:

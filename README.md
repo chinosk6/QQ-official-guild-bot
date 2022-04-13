@@ -32,7 +32,7 @@ def get_at_message(chain: bot_api.structs.Message):  # 注册一个艾特消息�
         reply = chain.content[chain.content.find("/echo") + len("/echo"):].strip()
         bot.api_send_message(chain.channel_id, chain.id, reply)
 
-    elif "/embed" in chain.content:  # 发送embed, 需要Ark权限
+    elif "/embed" in chain.content:  # 发送embed
         send_embed = Embed("标题", ["文本1", "文本2", "文本3"], image_url=None)
         bot.api_send_message(chain.channel_id, chain.id, embed=send_embed)
 
