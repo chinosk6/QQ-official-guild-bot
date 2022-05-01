@@ -327,3 +327,10 @@ class MessageDelete(BaseModel):
 
     message: t.Optional[DeletedMessage]
     op_user: t.Optional[OpUser]
+
+
+class MessageSetting(BaseModel):
+    disable_create_dm: t.Optional[str]
+    disable_push_msg: t.Optional[str]
+    channel_ids: t.Optional[t.List[str]]
+    channel_push_max_num: t.Optional[int]

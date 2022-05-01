@@ -95,7 +95,7 @@ class BotApi(BotLogger):
 
 
     def api_reply_message(self, event: structs.Message, content="", image_url="", retstr=False,
-                          embed=None, ark=None, others_parameter: t.Optional[t.Dict] = None, at_user=False,
+                          embed=None, ark=None, others_parameter: t.Optional[t.Dict] = None, at_user=True,
                           message_reference=True, **kwargs) \
             -> t.Union[str, structs.Message, None]:
         """
@@ -234,25 +234,39 @@ class BotApi(BotLogger):
         response = requests.request("POST", url, headers=self.__headers, data=payload)
         return self._retter(response, "发送信息失败", structs.Message, retstr)
 
-    def api_mute_guild(self, guild_id, mute_seconds="", mute_end_timestamp=""):
+    def api_mute_guild(self, guild_id, mute_seconds="", mute_end_timestamp="",
+                       user_ids: t.Optional[t.List[str]] = None) -> t.Union[str, dict, t.List[str]]:
         """
         全频道禁言, 秒数/时间戳二选一
         :param guild_id: 频道ID
         :param mute_seconds: 禁言秒数
         :param mute_end_timestamp: 禁言截止时间戳
-        :return: 若成功, 返回空字符串; 失败则返回错误信息
+        :param user_ids: 批量禁言的用户ID列表, 若此项为None, 则全员禁言
+        :return: 若成功, 返回空字符串(全员禁言) 或 被禁言的用户id列表(批量禁言); 失败则返回错误信息
         """
         url = f"{self.base_api}/guilds/{guild_id}/mute"
         _body = {"mute_end_timestamp": f"{mute_end_timestamp}"} if mute_end_timestamp != "" else \
             {"mute_seconds": f"{mute_seconds}"}
         response = requests.request("PATCH", url, data=json.dumps(_body), headers=self.__headers)
-        if response.status_code != 204:
-            data = response.text
-            self._tlogger(f"禁言频道失败: {data}", error=True, error_resp=data,
-                          traceid=response.headers.get("X-Tps-trace-ID"))
-            return data
+
+        if user_ids is None:
+            if response.status_code != 204:
+                data = response.text
+                self._tlogger(f"禁言频道失败: {data}", error=True, error_resp=data,
+                              traceid=response.headers.get("X-Tps-trace-ID"))
+                return data
+            else:
+                return ""
         else:
-            return ""
+
+            if response.status_code != 200:
+                self._tlogger(f"批量禁言失败: {response.text}", error=True, error_resp=response.text,
+                              traceid=response.headers.get("X-Tps-trace-ID"))
+                return response.text
+            else:
+                udata = json.loads(response.text)
+                return udata["user_ids"] if user_ids in udata else udata
+
 
     def api_mute_member(self, guild_id, member_id, mute_seconds="", mute_end_timestamp="") -> str:
         """
@@ -902,6 +916,36 @@ class BotApi(BotLogger):
             return [structs.Guild(**g) for g in data]
         else:
             return get_response
+
+    def api_get_guild_message_freq(self, guild_id, retstr=False) -> t.Union[str, None, structs.MessageSetting]:
+        """
+        获取频道消息频率设置
+        :param guild_id: 频道ID
+        :param retstr: 强制返回文本
+        :return: MessageSetting
+        """
+        url = f"{self.base_api}/guilds/{guild_id}/message/setting"
+        response = requests.request("GET", url, headers=self.__headers)
+        return self._retter(response, "获取频道消息频率设置失败", structs.MessageSetting, retstr, data_type=0)
+
+
+    def api_send_message_guide(self, channel_id, content: str, retstr=False):
+        """
+        发送消息设置引导
+        :param channel_id: 子频道ID
+        :param content: 内容
+        :param retstr: 强制返回文本
+        :return:
+        """
+        url = f"{self.base_api}/channels/{channel_id}/settingguide"
+        data = {"content": content}
+        response = requests.request("POST", url, data=json.dumps(data), headers=self.__headers)
+        if not str(response.status_code).startswith("2"):
+            self._tlogger(f"发送消息设置引导失败: {response.text}", error=True, error_resp=response.text,
+                          traceid=response.headers.get("X-Tps-trace-ID"))
+        else:
+            return ""
+
 
     def _request_guild_role_member(self, guild_id, role_id, user_id, channel_id="", request_function="PUT"):
         url = f"{self.base_api}/guilds/{guild_id}/members/{user_id}/roles/{role_id}"

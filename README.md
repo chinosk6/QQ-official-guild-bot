@@ -211,6 +211,8 @@ api_add_pins()  # 添加精华消息
 api_remove_pins()  # 删除精华消息
 api_get_pins()  # 获取精华消息
 api_send_message_reactions()  # 发送表情表态
+api_send_message_guide()  # 发送消息设置引导
+api_get_guild_message_freq()  # 获取频道消息频率设置
 
 api_pv_get_member_list()  # 仅私域机器人可用 - 取频道成员列表
 api_pv_kick_member()  # 仅私域机器人可用 - 踢出指定成员
