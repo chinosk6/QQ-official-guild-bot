@@ -93,7 +93,6 @@ class BotApi(BotLogger):
         response = requests.request("POST", url, data=json.dumps(payload), headers=self.__headers)
         return self._retter(response, "创建私信会话失败", structs.DMS, retstr, data_type=0)
 
-
     def api_reply_message(self, event: structs.Message, content="", image_url="", retstr=False,
                           embed=None, ark=None, others_parameter: t.Optional[t.Dict] = None, at_user=True,
                           message_reference=True, **kwargs) \
@@ -129,7 +128,6 @@ class BotApi(BotLogger):
         else:
             self.logger("reply_message() - 无法识别传入的event", error=True)
             return None
-
 
     def api_send_message(self, channel_id, msg_id="", content="", image_url="", retstr=False,
                          embed=None, ark=None, message_reference_type=0, message_reference_id=None,
@@ -177,7 +175,6 @@ class BotApi(BotLogger):
                                       message_reference_id=message_reference_id,
                                       guild_id=guild_id, **kwargs)
 
-
     def _api_send_message(self, channel_id, msg_id="", content="", image_url="", retstr=False,
                           embed=None, ark=None, others_parameter: t.Optional[t.Dict] = None, guild_id=None,
                           message_reference_type=0, message_reference_id=None, is_markdown=False) \
@@ -221,7 +218,6 @@ class BotApi(BotLogger):
                                       "ignore_get_message_error": False if message_reference_type == 1 else True}} \
             if message_reference_id and message_reference_type else None
 
-
         def merge_dict(*args) -> dict:
             merged = {}
             for _d in args:
@@ -247,9 +243,8 @@ class BotApi(BotLogger):
         url = f"{self.base_api}/guilds/{guild_id}/mute"
         _body = {"mute_end_timestamp": f"{mute_end_timestamp}"} if mute_end_timestamp != "" else \
             {"mute_seconds": f"{mute_seconds}"}
-        response = requests.request("PATCH", url, data=json.dumps(_body), headers=self.__headers)
-
         if user_ids is None:
+            response = requests.request("PATCH", url, data=json.dumps(_body), headers=self.__headers)
             if response.status_code != 204:
                 data = response.text
                 self._tlogger(f"禁言频道失败: {data}", error=True, error_resp=data,
@@ -258,15 +253,15 @@ class BotApi(BotLogger):
             else:
                 return ""
         else:
-
+            _body["user_ids"] = user_ids
+            response = requests.request("PATCH", url, data=json.dumps(_body), headers=self.__headers)
             if response.status_code != 200:
                 self._tlogger(f"批量禁言失败: {response.text}", error=True, error_resp=response.text,
                               traceid=response.headers.get("X-Tps-trace-ID"))
                 return response.text
             else:
                 udata = json.loads(response.text)
-                return udata["user_ids"] if user_ids in udata else udata
-
+                return udata["user_ids"] if f"{user_ids}" in udata else udata
 
     def api_mute_member(self, guild_id, member_id, mute_seconds="", mute_end_timestamp="") -> str:
         """
@@ -668,7 +663,7 @@ class BotApi(BotLogger):
         response = requests.request("GET", url)
         return self._retter(response, "获取频道可用权限列表失败", structs.APIPermission, retstr, data_type=1)
 
-    def api_demand_api_permission(self, guild_id, channel_id: str, path: str, method: str, desc: str, retstr=False)\
+    def api_demand_api_permission(self, guild_id, channel_id: str, path: str, method: str, desc: str, retstr=False) \
             -> t.Union[structs.APIPermissionDemand, str]:
         """
         创建频道 API 接口权限授权链接
@@ -704,12 +699,11 @@ class BotApi(BotLogger):
         response = requests.request("PUT", url)
         return self._retter(response, "添加精华消息失败", structs.PinsMessage, retstr, data_type=0)
 
-    def api_remove_pins(self, channel_id, message_id, retstr=False):
+    def api_remove_pins(self, channel_id, message_id):
         """
         移除精华消息
         :param channel_id: 子频道ID
         :param message_id: 消息ID, 删除全部填入: all
-        :param retstr: 强制返回str
         :return:
         """
         url = f"{self.base_api}/channels/{channel_id}/pins/{message_id}"
@@ -928,13 +922,11 @@ class BotApi(BotLogger):
         response = requests.request("GET", url, headers=self.__headers)
         return self._retter(response, "获取频道消息频率设置失败", structs.MessageSetting, retstr, data_type=0)
 
-
-    def api_send_message_guide(self, channel_id, content: str, retstr=False):
+    def api_send_message_guide(self, channel_id, content: str):
         """
         发送消息设置引导
         :param channel_id: 子频道ID
         :param content: 内容
-        :param retstr: 强制返回文本
         :return:
         """
         url = f"{self.base_api}/channels/{channel_id}/settingguide"
@@ -945,7 +937,6 @@ class BotApi(BotLogger):
                           traceid=response.headers.get("X-Tps-trace-ID"))
         else:
             return ""
-
 
     def _request_guild_role_member(self, guild_id, role_id, user_id, channel_id="", request_function="PUT"):
         url = f"{self.base_api}/guilds/{guild_id}/members/{user_id}/roles/{role_id}"
