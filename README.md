@@ -42,8 +42,38 @@ def get_at_message(chain: bot_api.structs.Message):  # 注册一个艾特消息�
 
 
 bot.start()  # 启动bot
-
 ```
+
+
+
+
+
+
+## 关于部分事件官方已改为被动消息说明
+
+|         事件代号         |         事件描述                |
+|          :----------------------:         |          :----------------------:         |
+|         GUILD_MEMBER_ADD         |成员加入|
+|         GUILD_MEMBER_UPDATE         |成员资料变更|
+|         GUILD_MEMBER_REMOVE         |成员被移除|
+|         MESSAGE_REACTION_ADD         |消息添加表情表态|
+|         MESSAGE_REACTION_REMOVE         |消息删除表情表态|
+|         FORUM_THREAD_CREATE         |用户创建主题|
+|         FORUM_THREAD_UPDATE         |用户更新主题|
+|         FORUM_THREAD_DELETE         |用户删除主题|
+|         FORUM_POST_CREATE         |用户创建帖子|
+|         FORUM_POST_DELETE         |用户删除帖子|
+|         FORUM_REPLY_CREATE         |用户回复评论|
+|         FORUM_REPLY_DELETE         |用户回复评论|
+
+### 使用：即将要回复的消息ID（msg_id）替换为以上事件代号即可
+```python
+这里以添加表情表态为例：
+
+bot.api_send_message(channel_id, msg_id='MESSAGE_REACTION_ADD', content='ok')
+```
+
+
 
 
 
@@ -68,6 +98,7 @@ bot.api_send_message(chain.channel_id, chain.id, "这是消息", "http://您的�
 ```python
 bot.api_send_message(chain.channel_id, chain.id, others_parameter={"content": "这是消息", "image": "https://您的图片"})
 ```
+
 
 
 
@@ -106,6 +137,8 @@ bot.api_send_message(channel_id, message_id, ark=send_ark)
 
 
 
+
+
 ## 目前支持的事件/API
 
 #### 事件
@@ -119,39 +152,39 @@ bot.api_send_message(channel_id, message_id, ark=send_ark)
 - `传入参数`指被注册函数的参数
   - 位于: 类`bot_api.structs`
 
-| 事件代号                 | 传入参数                 | 事件描述                              |
-| ------------------------ | ------------------------ | ------------------------------------- |
+|         事件代号         |         传入参数         |               事件描述                |
+| :----------------------: | :----------------------: | :-----------------------------------: |
 | FUNC_CALL_AFTER_BOT_LOAD | 初始化后的BotAPP类(self) | 当Bot初始化完成后, 会立刻执行这些函数 |
-| AT_MESSAGE_CREATE        | Message                  | 收到艾特消息                          |
-| MESSAGE_CREATE           | Message                  | 收到消息(仅私域机器人可用)            |
-| DIRECT_MESSAGE_CREATE    | Message                  | 收到私聊消息                          |
-| GUILD_CREATE             | Guild                    | bot加入频道                           |
-| GUILD_UPDATE             | Guild                    | 频道信息更新                          |
-| GUILD_DELETE             | Guild                    | 频道解散/bot被移除                    |
-| CHANNEL_CREATE           | Channel                  | 子频道被创建                          |
-| CHANNEL_UPDATE           | Channel                  | 子频道信息变更                        |
-| CHANNEL_DELETE           | Channel                  | 子频道被删除                          |
-| GUILD_MEMBER_ADD         | MemberWithGuildID        | 新用户加入频道                        |
-| GUILD_MEMBER_UPDATE      | -                        | TX: 暂无                              |
-| GUILD_MEMBER_REMOVE      | MemberWithGuildID        | 用户离开频道                          |
-| AUDIO_START              | AudioAction              | 音频开始播放                          |
-| AUDIO_FINISH             | AudioAction              | 音频结束                              |
-| AUDIO_ON_MIC             | AudioAction              | 上麦                                  |
-| AUDIO_OFF_MIC            | AudioAction              | 下麦                                  |
-| MESSAGE_REACTION_ADD     | MessageReaction          | 添加表情表态                          |
-| MESSAGE_REACTION_REMOVE  | MessageReaction          | 删除表情表态                          |
-| THREAD_CREATE            | 暂不支持                 | 用户创建主题                          |
-| THREAD_UPDATE            | 暂不支持                 | 用户更新主题                          |
-| THREAD_DELETE            | 暂不支持                 | 用户删除主题                          |
-| POST_CREATE              | 暂不支持                 | 用户创建帖子                          |
-| POST_DELETE              | 暂不支持                 | 用户删除帖子                          |
-| REPLY_CREATE             | 暂不支持                 | 用户回复评论                          |
-| REPLY_DELETE             | 暂不支持                 | 用户回复评论                          |
-| MESSAGE_AUDIT_PASS       | MessageAudited           | 消息审核通过                          |
-| MESSAGE_AUDIT_REJECT     | MessageAudited           | 消息审核不通过                        |
-| PUBLIC_MESSAGE_DELETE    | MessageDelete            | 消息撤回(公域)                        |
-| MESSAGE_DELETE           | MessageDelete            | 消息撤回(私域)                        |
-| DIRECT_MESSAGE_DELETE    | MessageDelete            | 消息撤回(私聊)                        |
+|    AT_MESSAGE_CREATE     |         Message          |             收到艾特消息              |
+|      MESSAGE_CREATE      |         Message          |      收到消息(仅私域机器人可用)       |
+|  DIRECT_MESSAGE_CREATE   |         Message          |             收到私聊消息              |
+|       GUILD_CREATE       |          Guild           |              bot加入频道              |
+|       GUILD_UPDATE       |          Guild           |             频道信息更新              |
+|       GUILD_DELETE       |          Guild           |          频道解散/bot被移除           |
+|      CHANNEL_CREATE      |         Channel          |             子频道被创建              |
+|      CHANNEL_UPDATE      |         Channel          |            子频道信息变更             |
+|      CHANNEL_DELETE      |         Channel          |             子频道被删除              |
+|     GUILD_MEMBER_ADD     |    MemberWithGuildID     |            新用户加入频道             |
+|   GUILD_MEMBER_UPDATE    |            -             |               TX: 暂无                |
+|   GUILD_MEMBER_REMOVE    |    MemberWithGuildID     |             用户离开频道              |
+|       AUDIO_START        |       AudioAction        |             音频开始播放              |
+|       AUDIO_FINISH       |       AudioAction        |               音频结束                |
+|       AUDIO_ON_MIC       |       AudioAction        |                 上麦                  |
+|      AUDIO_OFF_MIC       |       AudioAction        |                 下麦                  |
+|   MESSAGE_REACTION_ADD   |     MessageReaction      |             添加表情表态              |
+| MESSAGE_REACTION_REMOVE  |     MessageReaction      |             删除表情表态              |
+|      THREAD_CREATE       |         暂不支持         |             用户创建主题              |
+|      THREAD_UPDATE       |         暂不支持         |             用户更新主题              |
+|      THREAD_DELETE       |         暂不支持         |             用户删除主题              |
+|       POST_CREATE        |         暂不支持         |             用户创建帖子              |
+|       POST_DELETE        |         暂不支持         |             用户删除帖子              |
+|       REPLY_CREATE       |         暂不支持         |             用户回复评论              |
+|       REPLY_DELETE       |         暂不支持         |             用户回复评论              |
+|    MESSAGE_AUDIT_PASS    |      MessageAudited      |             消息审核通过              |
+|   MESSAGE_AUDIT_REJECT   |      MessageAudited      |            消息审核不通过             |
+|  PUBLIC_MESSAGE_DELETE   |      MessageDelete       |            消息撤回(公域)             |
+|      MESSAGE_DELETE      |      MessageDelete       |            消息撤回(私域)             |
+|  DIRECT_MESSAGE_DELETE   |      MessageDelete       |            消息撤回(私聊)             |
 
 
 
