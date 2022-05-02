@@ -241,11 +241,10 @@ class BotApi(BotLogger):
         :return: 若成功, 返回空字符串(全员禁言) 或 被禁言的用户id列表(批量禁言); 失败则返回错误信息
         """
         url = f"{self.base_api}/guilds/{guild_id}/mute"
-        _body = {"mute_end_timestamp": f"{mute_end_timestamp}", "user_ids": user_ids} if mute_end_timestamp != "" else \
-            {"mute_seconds": f"{mute_seconds}", "user_ids": user_ids}
-        response = requests.request("PATCH", url, data=json.dumps(_body), headers=self.__headers)
-
+        _body = {"mute_end_timestamp": f"{mute_end_timestamp}"} if mute_end_timestamp != "" else \
+            {"mute_seconds": f"{mute_seconds}"}
         if user_ids is None:
+            response = requests.request("PATCH", url, data=json.dumps(_body), headers=self.__headers)
             if response.status_code != 204:
                 data = response.text
                 self._tlogger(f"禁言频道失败: {data}", error=True, error_resp=data,
@@ -254,14 +253,15 @@ class BotApi(BotLogger):
             else:
                 return ""
         else:
-
+            _body["user_ids"] = user_ids
+            response = requests.request("PATCH", url, data=json.dumps(_body), headers=self.__headers)
             if response.status_code != 200:
                 self._tlogger(f"批量禁言失败: {response.text}", error=True, error_resp=response.text,
                               traceid=response.headers.get("X-Tps-trace-ID"))
                 return response.text
             else:
                 udata = json.loads(response.text)
-                return udata["user_ids"] if user_ids in udata else udata
+                return udata["user_ids"] if f"{user_ids}" in udata else udata
 
     def api_mute_member(self, guild_id, member_id, mute_seconds="", mute_end_timestamp="") -> str:
         """
