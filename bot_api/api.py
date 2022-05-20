@@ -660,7 +660,7 @@ class BotApi(BotLogger):
         :return: 频道权限列表
         """
         url = f"{self.base_api}/guilds/{guild_id}/api_permission"
-        response = requests.request("GET", url)
+        response = requests.request("GET", url, headers=self.__headers)
         return self._retter(response, "获取频道可用权限列表失败", structs.APIPermission, retstr, data_type=1)
 
     def api_demand_api_permission(self, guild_id, channel_id: str, path: str, method: str, desc: str, retstr=False) \
@@ -684,7 +684,7 @@ class BotApi(BotLogger):
             },
             "desc": desc
         }
-        response = requests.request("POST", url, data=json.dumps(payload))
+        response = requests.request("POST", url, headers=self.__headers, data=json.dumps(payload))
         return self._retter(response, "创建授权链接失败", structs.APIPermissionDemand, retstr, data_type=0)
 
     def api_add_pins(self, channel_id, message_id, retstr=False) -> t.Union[structs.PinsMessage, str]:
@@ -696,7 +696,7 @@ class BotApi(BotLogger):
         :return:
         """
         url = f"{self.base_api}/channels/{channel_id}/pins/{message_id}"
-        response = requests.request("PUT", url)
+        response = requests.request("PUT", url, headers=self.__headers)
         return self._retter(response, "添加精华消息失败", structs.PinsMessage, retstr, data_type=0)
 
     def api_remove_pins(self, channel_id, message_id):
@@ -707,7 +707,7 @@ class BotApi(BotLogger):
         :return:
         """
         url = f"{self.base_api}/channels/{channel_id}/pins/{message_id}"
-        response = requests.request("DELETE", url)
+        response = requests.request("DELETE", url, headers=self.__headers)
         if response.status_code != 204:
             self._tlogger(f"移除精华消息失败: {response.text}", error=True, error_resp=response.text,
                           traceid=response.headers.get("X-Tps-trace-ID"))
@@ -723,7 +723,7 @@ class BotApi(BotLogger):
         :return:
         """
         url = f"{self.base_api}/channels/{channel_id}/pins"
-        response = requests.request("GET", url)
+        response = requests.request("GET", url, headers=self.__headers)
         return self._retter(response, "获取精华消息失败", structs.PinsMessage, retstr, data_type=0)
 
     def api_send_message_reactions(self, channel_id, message_id, emoji_type, emoji_id):
@@ -736,7 +736,7 @@ class BotApi(BotLogger):
         :return: 成功返回空字符串
         """
         url = f"{self.base_api}/channels/{channel_id}/messages/{message_id}/reactions/{emoji_type}/{emoji_id}"
-        response = requests.request("PUT", url)
+        response = requests.request("PUT", url, headers=self.__headers)
         if response.status_code != 204:
             self._tlogger(f"发送表情表态失败: {response.text}", error=True, error_resp=response.text,
                           traceid=response.headers.get("X-Tps-trace-ID"))
@@ -832,7 +832,7 @@ class BotApi(BotLogger):
         """
         url = f"{self.base_api}/channels/{channel_id}"
         response = requests.request("DELETE", url, headers=self.__headers)
-        if response.status_code != 200 and response.status_code != 204:  # ?
+        if response.status_code != 200 and response.status_code != 204:
             self._tlogger(f"删除子频道失败: {response.text}", error_resp=response.text,
                           traceid=response.headers.get("X-Tps-trace-ID"))
             return response.text

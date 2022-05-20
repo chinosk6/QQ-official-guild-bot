@@ -1,0 +1,4 @@
+bot:
+  id: 123  # 机器人id
+  token: 456  # 机器人token
+  secret: 789  # 机器人secret

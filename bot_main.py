@@ -1,6 +1,9 @@
 import bot_api
+from bot_api.utils import yaml_util
 
-bot = bot_api.BotApp(123456, "你的bot token", "你的bot secret",
+
+token = yaml_util.read('config.yaml')
+bot = bot_api.BotApp(token['bot']['id'], token['bot']['token'], token['bot']['secret'],
                      is_sandbox=True, debug=True, api_return_pydantic=True,
                      inters=[bot_api.Intents.GUILDS, bot_api.Intents.AT_MESSAGES, bot_api.Intents.GUILD_MEMBERS])
 
