@@ -10,7 +10,7 @@
 - 在 `bot_main.py` 同级目录下创建名为 `config.yaml` 的配置文件，填入自己的 `bot_app_id` 、 `bot_token` 及 `bot_secret`，内容类似下面所示，也可直接使用仓库里的 `config.example.yaml` 文件，然后自己修改后缀名和内容
 ```yaml
 bot:
-  app_id: 123  # 机器人id
+  id: 123  # 机器人id
   token: 456  # 机器人token
   secret: 789  # 机器人secret
 ```
