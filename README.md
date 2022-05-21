@@ -6,13 +6,21 @@
 
 # 直接使用SDK
 
-- 参考`bot_main.py`
-
+- 参考 `bot_main.py`
+- 在 `bot_main.py` 同级目录下创建名为 `config.yaml` 的配置文件，填入自己的 `bot_app_id` 、 `bot_token` 及 `bot_secret`，内容类似下面所示，也可直接使用仓库里的 `config.example.yaml` 文件，然后自己修改后缀名和内容
+```yaml
+bot:
+  id: 123  # 机器人id
+  token: 456  # 机器人token
+  secret: 789  # 机器人secret
+```
 ```python
 import bot_api
 from bot_api.models import Ark, Embed
+from bot_api.utils import yaml_util
 
-bot = bot_api.BotApp(123456, "你的bot token", "你的bot secret",
+token = yaml_util.read('config.yaml')
+bot = bot_api.BotApp(token['bot']['id'], token['bot']['token'], token['bot']['secret'],
                      is_sandbox=True, debug=True, api_return_pydantic=True,
                      ignore_at_self=False,  # 过滤消息正文中艾特Bot自身的内容, 默认为False
                      inters=[bot_api.Intents.GUILDS, bot_api.Intents.AT_MESSAGES,

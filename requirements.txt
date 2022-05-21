@@ -6,3 +6,4 @@ pydantic
 websocket-client
 colorama
 schedule
+pyyaml
