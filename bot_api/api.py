@@ -4,6 +4,8 @@ from . import structs
 import typing as t
 from . import models
 from .logger import BotLogger
+import re
+from io import BytesIO
 
 
 class BotApi(BotLogger):
@@ -95,6 +97,7 @@ class BotApi(BotLogger):
 
     def api_reply_message(self, event: structs.Message, content="", image_url="", retstr=False,
                           embed=None, ark=None, others_parameter: t.Optional[t.Dict] = None, at_user=True,
+                          image: t.Optional[t.Union[str, BytesIO]] = None,
                           message_reference=True, **kwargs) \
             -> t.Union[str, structs.Message, None]:
         """
@@ -107,6 +110,7 @@ class BotApi(BotLogger):
         :param ark: ark消息, 可空
         :param others_parameter: 其它自定义字段
         :param at_user: 艾特被回复者
+        :param image: 发送图片, 可以填写图片url/图片本地地址/BytesIO
         :param message_reference: 引用对应消息
         """
         event_type = event.message_type_sdk
@@ -118,11 +122,11 @@ class BotApi(BotLogger):
 
         if event_type == "guild":
             return self.api_send_message(channel_id=event.channel_id, msg_id=event.id, content=content,
-                                         image_url=image_url, retstr=retstr, embed=embed, ark=ark,
+                                         image_url=image_url, retstr=retstr, embed=embed, ark=ark, image=image,
                                          others_parameter=others_parameter, message_reference_type=ref_type, **kwargs)
         elif event_type == "private":
             return self.api_send_private_message(guild_id=event.guild_id, channel_id=event.channel_id, msg_id=event.id,
-                                                 content=content, image_url=image_url,
+                                                 content=content, image_url=image_url, image=image,
                                                  retstr=retstr, embed=embed, ark=ark, others_parameter=others_parameter,
                                                  message_reference_type=ref_type, **kwargs)
         else:
@@ -131,6 +135,7 @@ class BotApi(BotLogger):
 
     def api_send_message(self, channel_id, msg_id="", content="", image_url="", retstr=False,
                          embed=None, ark=None, message_reference_type=0, message_reference_id=None,
+                         image: t.Optional[t.Union[str, BytesIO]] = None,
                          others_parameter: t.Optional[t.Dict] = None, **kwargs) \
             -> t.Union[str, structs.Message, None]:
         """
@@ -143,17 +148,19 @@ class BotApi(BotLogger):
         :param embed: embed消息, 可空
         :param ark: ark消息, 可空
         :param message_reference_type: 引用消息, 0-不引用; 1-引用消息, 不忽略获取引用消息详情错误; 2- 引用消息, 忽略获取引用消息详情错误
+        :param image: 发送图片, 可以填写图片url/图片本地地址/BytesIO
         :param message_reference_id: 引用消息的ID, 若为空, 则使用"msg_id"字段的值
         :param others_parameter: 其它自定义字段
         """
         return self._api_send_message(channel_id=channel_id, msg_id=msg_id, content=content, image_url=image_url,
-                                      retstr=retstr, embed=embed, ark=ark,
+                                      retstr=retstr, embed=embed, ark=ark, image=image,
                                       message_reference_type=message_reference_type,
                                       message_reference_id=message_reference_id, others_parameter=others_parameter,
                                       **kwargs)
 
     def api_send_private_message(self, guild_id, channel_id, msg_id="", content="", image_url="", retstr=False,
                                  embed=None, ark=None, message_reference_type=0, message_reference_id=None,
+                                 image: t.Optional[t.Union[str, BytesIO]] = None,
                                  others_parameter: t.Optional[t.Dict] = None, **kwargs):
         """
         发送私聊消息
@@ -167,15 +174,17 @@ class BotApi(BotLogger):
         :param ark: ark消息, 可空
         :param message_reference_type: 引用消息, 0-不引用; 1-引用消息, 不忽略获取引用消息详情错误; 2- 引用消息, 忽略获取引用消息详情错误
         :param message_reference_id: 引用消息的ID, 若为空, 则使用"msg_id"字段的值
+        :param image: 发送图片, 可以填写图片url/图片本地地址/BytesIO
         :param others_parameter: 其它自定义字段
         """
         return self._api_send_message(channel_id=channel_id, msg_id=msg_id, content=content, image_url=image_url,
                                       retstr=retstr, embed=embed, ark=ark, others_parameter=others_parameter,
                                       message_reference_type=message_reference_type,
                                       message_reference_id=message_reference_id,
-                                      guild_id=guild_id, **kwargs)
+                                      guild_id=guild_id, image=image, **kwargs)
 
-    def _api_send_message(self, channel_id, msg_id="", content="", image_url="", retstr=False,
+
+    def _api_send_message(self, channel_id, msg_id="", content="", image_url="", image=None, retstr=False,
                           embed=None, ark=None, others_parameter: t.Optional[t.Dict] = None, guild_id=None,
                           message_reference_type=0, message_reference_id=None, is_markdown=False) \
             -> t.Union[str, structs.Message, None]:
@@ -185,6 +194,7 @@ class BotApi(BotLogger):
         :param msg_id: 消息ID, 可空
         :param content: 消息内容, 可空
         :param image_url: 图片url, 可空
+        :param image: 图片, 可空
         :param retstr: 调用此API后返回纯文本
         :param embed: embed消息, 可空
         :param ark: ark消息, 可空
@@ -193,10 +203,11 @@ class BotApi(BotLogger):
         :param message_reference_type: 引用消息, 0-不引用; 1-引用消息, 不忽略获取引用消息详情错误; 2- 引用消息, 忽略获取引用消息详情错误
         :param message_reference_id: 引用消息的ID, 若为空, 则使用"msg_id"字段的值
         """
-
+        headers = self.__headers.copy()
         url = f"{self.base_api}/channels/{channel_id}/messages" if guild_id is None else \
             f"{self.base_api}/dms/{guild_id}/messages"
-        if content == "" and image_url == "" and embed is None and ark is None and others_parameter is None:
+        if content == "" and image_url == "" and embed is None and ark is None and others_parameter is None \
+                and image is None:
             self._tlogger("消息为空, 请检查", error=True)
             return None
 
@@ -208,6 +219,18 @@ class BotApi(BotLogger):
         else:
             _c = None
 
+        file = None
+        if image is not None:
+            if type(image) == str:
+                if re.search(r"^((https|http)?://)[^\s]+", image):
+                    image_url = image
+                else:
+                    file = {"file_image": open(image, "rb")}
+                    headers.pop("Content-Type")
+            elif type(image) == BytesIO:
+                file = {"file_image": image}
+                headers.pop("Content-Type")
+
         _im = {"image": image_url} if image_url != "" else None
         _msgid = {"msg_id": msg_id} if msg_id != "" else None
         _embed = embed.ark_to_json() if callable(getattr(embed, "ark_to_json", None)) else None
@@ -218,16 +241,32 @@ class BotApi(BotLogger):
                                       "ignore_get_message_error": False if message_reference_type == 1 else True}} \
             if message_reference_id and message_reference_type else None
 
-        def merge_dict(*args) -> dict:
+        def dict_dmp(_dt: dict):
+            _ret = {}
+            for k in _dt:
+                if type(_dt[k]) != str:
+                    _dmp = json.dumps(_dt[k])
+                else:
+                    _dmp = _dt[k]
+                _ret[k] = _dmp
+            return _ret
+
+        def merge_dict(*args, is_dump=False) -> dict:
             merged = {}
             for _d in args:
                 if _d is not None:
-                    merged = {**merged, **_d}
+                    if is_dump:
+                        merged.update(dict_dmp(_d))
+                    else:
+                        merged.update(_d)
             return merged
 
-        payload = json.dumps(merge_dict(_c, _im, _msgid, _embed, _ark, _ref, others_parameter))
+        if "Content-Type" in headers:
+            payload = json.dumps(merge_dict(_c, _im, _msgid, _embed, _ark, _ref, others_parameter))
+        else:
+            payload = merge_dict(_c, _im, _msgid, _embed, _ark, _ref, others_parameter, is_dump=True)
 
-        response = requests.request("POST", url, headers=self.__headers, data=payload)
+        response = requests.request("POST", url, headers=headers, data=payload, files=file)
         return self._retter(response, "发送信息失败", structs.Message, retstr)
 
     def api_mute_guild(self, guild_id, mute_seconds="", mute_end_timestamp="",
